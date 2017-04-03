@@ -44,9 +44,12 @@ type nextAnnotation struct {
 }
 
 func (am *annotationMapper) init() {
-	*(am.messageProducer) = producer.NewMessageProducer(am.producerConfig)
+	messageProducer := producer.NewMessageProducer(am.producerConfig)
+	am.messageProducer = &messageProducer
+
 	httpCl := http.Client{}
-	*(am.messageConsumer) = consumer.NewConsumer(am.consumerConfig, am.queueConsume, &httpCl)
+	messageConsumer := consumer.NewConsumer(am.consumerConfig, am.queueConsume, &httpCl)
+	am.messageConsumer = &messageConsumer
 }
 
 func (am *annotationMapper) queueConsume(m consumer.Message) {
