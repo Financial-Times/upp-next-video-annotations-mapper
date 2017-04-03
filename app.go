@@ -190,19 +190,19 @@ func listen(sc serviceConfig) {
 	}
 }
 
-func consumeUntilSigterm(messageConsumer *consumer.Consumer, config consumer.QueueConfig) {
+func consumeUntilSigterm(messageConsumer *consumer.MessageConsumer, config consumer.QueueConfig) {
 	logger.messageEvent("Starting queue consumer: %v", config.Topic)
 
 	var consumerWaitGroup sync.WaitGroup
 	consumerWaitGroup.Add(1)
 	go func() {
-		messageConsumer.Start()
+		(*messageConsumer).Start()
 		consumerWaitGroup.Done()
 	}()
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
-	messageConsumer.Stop()
+	(*messageConsumer).Stop()
 	consumerWaitGroup.Wait()
 }
 
