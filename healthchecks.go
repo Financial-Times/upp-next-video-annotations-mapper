@@ -7,16 +7,15 @@ import (
 	"net/http"
 )
 
-// TODO: add appropriate parameters for checking public-things-api app
 func (sc *serviceConfig) publicThingsAppCheck() fthealth.Check {
 	return fthealth.Check{
 		BusinessImpact:   "Videos cannot be published",
-		Name:             "",
-		PanicGuide:       "",
+		Name:             sc.publicThingsAppName + " Availabililty Check",
+		PanicGuide:       sc.publicThingsAppPanicGuide,
 		Severity:         1,
-		TechnicalSummary: "Checks that " + "" + " Service is reachable. Internal Content Service requests content from " + "" + " service.",
+		TechnicalSummary: "Checks that " + sc.publicThingsAppName + " Service is reachable. Next video annotations mapper requests content from " + sc.publicThingsAppName + " service.",
 		Checker: func() (string, error) {
-			return checkServiceAvailability("", "")
+			return checkServiceAvailability(sc.publicThingsAppName, sc.publicThingsAppHealthURI)
 		},
 	}
 }
