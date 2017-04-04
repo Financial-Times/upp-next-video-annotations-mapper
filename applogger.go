@@ -38,13 +38,14 @@ func (appLogger *appLogger) messageEvent(queueTopic string, message string) {
 	}).Info(message)
 }
 
-func (appLogger *appLogger) warnMessageEvent(event queueEvent, err error, errMessage string) {
+func (appLogger *appLogger) warnMessageEvent(event queueEvent, videoUUID string, err error, errMessage string) {
 	appLogger.log.WithFields(logrus.Fields{
 		"event":          "error",
 		"service_name":   event.serviceName,
 		"queue_name":     event.queueName,
 		"queue_topic":    event.queueTopic,
 		"transaction_id": event.transactionID,
+		"uuid":           videoUUID,
 		"error":          err,
 	}).Warn(errMessage)
 }
@@ -98,13 +99,14 @@ func (appLogger *appLogger) videoErrorEvent(transactionID string, videoUUID stri
 //	}).Info()
 //}
 //
-func (appLogger *appLogger) requestEvent(serviceName string, requestURL string, transactionID string, thingUUID string) {
+func (appLogger *appLogger) requestEvent(serviceName string, requestURL string, transactionID string, thingUUID string, videoUUID string) {
 	appLogger.log.WithFields(logrus.Fields{
 		"event":          "request",
 		"service_name":   serviceName,
 		"request_url":    requestURL,
 		"transaction_id": transactionID,
 		"thing_uuid":     thingUUID,
+		"uuid":           videoUUID,
 	}).Info()
 }
 
@@ -121,7 +123,7 @@ func (appLogger *appLogger) errorEvent(serviceName string, requestURL string, tr
 
 }
 
-func (appLogger *appLogger) requestFailedEvent(serviceName string, requestURL string, resp *http.Response, thingUUID string) {
+func (appLogger *appLogger) requestFailedEvent(serviceName string, requestURL string, resp *http.Response, thingUUID string, videoUUID string) {
 	appLogger.log.WithFields(logrus.Fields{
 		"event":          "request_failed",
 		"service_name":   serviceName,
@@ -129,10 +131,11 @@ func (appLogger *appLogger) requestFailedEvent(serviceName string, requestURL st
 		"transaction_id": resp.Header.Get(tid.TransactionIDHeader),
 		"status":         resp.StatusCode,
 		"thing_uuid":     thingUUID,
+		"uuid":           videoUUID,
 	}).Warnf("Request failed. %s responded with %s", serviceName, resp.Status)
 }
 
-func (appLogger *appLogger) responseEvent(serviceName string, requestURL string, resp *http.Response, thingUUID string) {
+func (appLogger *appLogger) responseEvent(serviceName string, requestURL string, resp *http.Response, thingUUID string, videoUUID string) {
 	appLogger.log.WithFields(logrus.Fields{
 		"event":          "response",
 		"service_name":   serviceName,
@@ -140,5 +143,6 @@ func (appLogger *appLogger) responseEvent(serviceName string, requestURL string,
 		"request_url":    requestURL,
 		"transaction_id": resp.Header.Get(tid.TransactionIDHeader),
 		"thing_uuid":     thingUUID,
+		"uuid":           videoUUID,
 	}).Info("Response from " + serviceName)
 }

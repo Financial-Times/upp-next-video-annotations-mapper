@@ -17,7 +17,7 @@ const prefLabelField = "prefLabel"
 type thingHandler struct {
 	serviceConfig
 	transactionID string
-	videoUUID string
+	videoUUID     string
 }
 
 type thingInfo struct {
@@ -28,14 +28,12 @@ type thingInfo struct {
 
 func (t *thingHandler) retrieveThingsDetails(nextAnns []nextAnnotation) {
 	var waitGroup sync.WaitGroup
-
 	for _, nextAnn := range nextAnns {
 		waitGroup.Add(1)
 		go func(thing *thingInfo) {
 			defer waitGroup.Done()
 
 			response, ok := t.getThing(thing.uuid)
-
 			defer cleanupResp(response, logger.log)
 
 			if !ok || response == nil {
@@ -53,7 +51,7 @@ func (t *thingHandler) retrieveThingsDetails(nextAnns []nextAnnotation) {
 			thing.directType = directType
 			thing.prefLabel = prefLabel
 
-		}(&nextAnn.thing)
+		}(nextAnn.thing)
 	}
 
 	waitGroup.Wait()
@@ -71,7 +69,7 @@ func (t *thingHandler) getThing(thingUUID string) (*http.Response, bool) {
 	req.Header.Set(tid.TransactionIDHeader, t.transactionID)
 	req.Header.Set("Content-Type", "application/json")
 
-	logger.requestEvent(t.publicThingsAppName, requestURL, t.transactionID, thingUUID)
+	logger.requestEvent(t.publicThingsAppName, requestURL, t.transactionID, thingUUID, t.videoUUID)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -81,11 +79,11 @@ func (t *thingHandler) getThing(thingUUID string) (*http.Response, bool) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		logger.requestFailedEvent(t.publicThingsAppName, req.URL.String(), resp, thingUUID)
+		logger.requestFailedEvent(t.publicThingsAppName, req.URL.String(), resp, thingUUID, t.videoUUID)
 		return nil, false
 	}
 
-	logger.responseEvent(t.publicThingsAppName, req.URL.String(), resp, thingUUID)
+	logger.responseEvent(t.publicThingsAppName, req.URL.String(), resp, thingUUID, t.videoUUID)
 	return resp, true
 }
 
@@ -134,12 +132,6 @@ func (t *thingHandler) getThingStringField(key string, obj map[string]interface{
 	if !ok {
 		logger.thingEvent(t.transactionID, thingUUID, t.videoUUID,
 			fmt.Sprintf("%v field not found within %s response. Body: [%v]", key, t.publicThingsAppName, fmt.Sprint(thingBytes)))
-		return "", false
-	}
-
-	if !ok {
-		logger.thingEvent(t.transactionID, thingUUID, t.videoUUID,
-			fmt.Sprintf("[%s] field is not of type string: [%v]", key, fmt.Sprint(thingBytes)))
 		return "", false
 	}
 

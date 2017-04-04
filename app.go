@@ -96,37 +96,37 @@ func main() {
 	})
 	addresses := app.Strings(cli.StringsOpt{
 		Name:   "queue-addresses",
-		Value:  nil,
+		Value:  []string{"http://localhost:8080"},
 		Desc:   "Addresses to connect to the queue (hostnames).",
 		EnvVar: "Q_ADDR",
 	})
 	group := app.String(cli.StringOpt{
 		Name:   "group",
-		Value:  "",
+		Value:  "videoAnnotationsMapper",
 		Desc:   "Group used to read the messages from the queue.",
 		EnvVar: "Q_GROUP",
 	})
 	readTopic := app.String(cli.StringOpt{
 		Name:   "read-topic",
-		Value:  "",
+		Value:  "NativeCmsPublicationEvents",
 		Desc:   "The topic to read the meassages from.",
 		EnvVar: "Q_READ_TOPIC",
 	})
 	readQueue := app.String(cli.StringOpt{
 		Name:   "read-queue",
-		Value:  "",
+		Value:  "kafka",
 		Desc:   "The queue to read the meassages from.",
 		EnvVar: "Q_READ_QUEUE",
 	})
 	writeTopic := app.String(cli.StringOpt{
 		Name:   "write-topic",
-		Value:  "",
+		Value:  "V1ConceptAnnotations",
 		Desc:   "The topic to write the meassages to.",
 		EnvVar: "Q_WRITE_TOPIC",
 	})
 	writeQueue := app.String(cli.StringOpt{
 		Name:   "write-queue",
-		Value:  "",
+		Value:  "kafka",
 		Desc:   "The queue to write the meassages to.",
 		EnvVar: "Q_WRITE_QUEUE",
 	})
@@ -191,7 +191,7 @@ func listen(sc serviceConfig) {
 }
 
 func consumeUntilSigterm(messageConsumer *consumer.MessageConsumer, config consumer.QueueConfig) {
-	logger.messageEvent("Starting queue consumer: %v", config.Topic)
+	logger.messageEvent(config.Topic, "Starting queue consumer")
 
 	var consumerWaitGroup sync.WaitGroup
 	consumerWaitGroup.Add(1)
