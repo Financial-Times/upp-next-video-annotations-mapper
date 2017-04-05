@@ -58,9 +58,9 @@ type annHandler struct {
 func (h annHandler) createAnnotations(nextAnns []nextAnnotation) *ConceptSuggestion {
 	var suggestions = make([]suggestion, 0)
 	for _, nextAnn := range nextAnns {
-		suggestion, ok := h.createAnnotation(nextAnn)
+		suggestionsForAnn, ok := h.createAnnotation(nextAnn)
 		if ok {
-			suggestions = append(suggestions, *suggestion)
+			suggestions = append(suggestions, suggestionsForAnn...)
 		}
 	}
 
@@ -71,20 +71,24 @@ func (h annHandler) createAnnotations(nextAnns []nextAnnotation) *ConceptSuggest
 	return &ConceptSuggestion{h.videoUUID, suggestions}
 }
 
-func (h annHandler) createAnnotation(nextAnn nextAnnotation) (*suggestion, bool) {
-	predicate, ok := getPredicate(nextAnn.thing.directType, nextAnn.primaryFlag)
-	if !ok {
+func (h annHandler) createAnnotation(nextAnn nextAnnotation) ([]suggestion, bool) {
+	predicates := getPredicate(nextAnn.thing.directType, nextAnn.primaryFlag)
+	if len(predicates) == 0 {
 		logger.thingEvent(h.transactionID, nextAnn.thing.uuid, h.videoUUID,
 			fmt.Sprintf("No matched annotation predicate for type [%s] and primary flag [%t] combination", nextAnn.thing.directType, nextAnn.primaryFlag))
 		return nil, false
 	}
 
-	thing := thing{
-		ID:        nextAnn.thingID,
-		PrefLabel: nextAnn.thing.prefLabel,
-		Predicate: predicate,
-		Types:     []string{nextAnn.thing.directType},
+	var suggestions = make([]suggestion, 0)
+	for _, predicate := range predicates {
+		thing := thing{
+			ID:        nextAnn.thingID,
+			PrefLabel: nextAnn.thing.prefLabel,
+			Predicate: predicate,
+			Types:     []string{nextAnn.thing.directType},
+		}
+		suggestions = append(suggestions, suggestion{Thing: thing, Provenance: provenances})
 	}
 
-	return &suggestion{Thing: thing, Provenance: provenances}, true
+	return suggestions, true
 }
