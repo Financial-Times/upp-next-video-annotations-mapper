@@ -90,15 +90,6 @@ func (appLogger *appLogger) videoErrorEvent(transactionID string, videoUUID stri
 	}).Warn(message)
 }
 
-//func (appLogger *appLogger) TransactionStartedEvent(requestURL string, transactionID string, uuid string) {
-//	appLogger.log.WithFields(logrus.Fields{
-//		"event":          "transaction_started",
-//		"request_url":    requestURL,
-//		"transaction_id": transactionID,
-//		"uuid":           uuid,
-//	}).Info()
-//}
-//
 func (appLogger *appLogger) requestEvent(serviceName string, requestURL string, transactionID string, thingUUID string, videoUUID string) {
 	appLogger.log.WithFields(logrus.Fields{
 		"event":          "request",
