@@ -163,10 +163,11 @@ func main() {
 			Queue: *writeQueue,
 		}
 
-		annMapper := annotationMapper{sc: sc, consumerConfig: consumerConfig, producerConfig: producerConfig}
+		annMapper := queueHandler{sc: sc, consumerConfig: consumerConfig, producerConfig: producerConfig}
 		annMapper.init()
 
-		go listen(sc)
+		h := serviceHandler{sc}
+		go listen(sc, h)
 
 		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
 	}
@@ -176,8 +177,9 @@ func main() {
 	}
 }
 
-func listen(sc serviceConfig) {
+func listen(sc serviceConfig, h serviceHandler) {
 	r := mux.NewRouter()
+	r.Path("/map").Handler(handlers.MethodHandler{"POST": http.HandlerFunc(h.mapRequest)})
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(sc.serviceName, serviceDescription, sc.publicThingsAppCheck()))})

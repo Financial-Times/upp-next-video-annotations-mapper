@@ -2,19 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/Financial-Times/message-queue-go-producer/producer"
-	"github.com/Financial-Times/message-queue-gonsumer/consumer"
-	"github.com/satori/go.uuid"
-	"net/http"
 	"strings"
-	"time"
 )
-
-const nextVideoOrigin = "http://cmdb.ft.com/systems/next-video-editor"
-const dateFormat = "2006-01-02T03:04:05.000Z0700"
-const generatedMsgType = "concept-suggestions"
 
 const videoUUIDField = "id"
 const annotationsField = "annotations"
@@ -22,16 +12,9 @@ const annotationIdField = "id"
 const annotationNameField = "name"
 const annotationPrimaryField = "primary"
 
-type annotationMapper struct {
-	sc              serviceConfig
-	consumerConfig  consumer.QueueConfig
-	producerConfig  producer.MessageProducerConfig
-	messageConsumer *consumer.MessageConsumer
-	messageProducer *producer.MessageProducer
-}
-
-type videoMessage struct {
-	origMsg      *consumer.Message
+type videoMapper struct {
+	sc           serviceConfig
+	strContent   string
 	tid          string
 	unmarshalled map[string]interface{}
 }
@@ -43,55 +26,7 @@ type nextAnnotation struct {
 	thing       *thingInfo
 }
 
-func (am *annotationMapper) init() {
-	messageProducer := producer.NewMessageProducer(am.producerConfig)
-	am.messageProducer = &messageProducer
-
-	httpCl := http.Client{}
-	messageConsumer := consumer.NewConsumer(am.consumerConfig, am.queueConsume, &httpCl)
-	am.messageConsumer = &messageConsumer
-}
-
-func (am *annotationMapper) queueConsume(m consumer.Message) {
-	vm := videoMessage{origMsg: &m, tid: m.Headers["X-Request-Id"]}
-	if vm.origMsg.Headers["Origin-System-Id"] != nextVideoOrigin {
-		logger.messageEvent(am.consumerConfig.Topic, fmt.Sprintf("Ignoring message with different Origin-System-Id: %v", vm.origMsg.Headers["Origin-System-Id"]))
-		return
-	}
-	marshalledEvent, videoUUID, err := am.mapMessage(&vm)
-	if err != nil {
-		logger.warnMessageEvent(queueEvent{am.sc.serviceName, am.consumerConfig.Queue, am.consumerConfig.Topic, vm.tid}, videoUUID, err,
-			"Error mapping the message from queue")
-		return
-	}
-	headers := createHeader(m.Headers)
-	msgToSend := string(marshalledEvent)
-	err = (*am.messageProducer).SendMessage("", producer.Message{Headers: headers, Body: msgToSend})
-	if err != nil {
-		logger.warnMessageEvent(queueEvent{am.sc.serviceName, am.producerConfig.Queue, am.producerConfig.Topic, vm.tid}, videoUUID, err,
-			"Error sending transformed message to queue")
-		return
-	}
-	logger.messageSentEvent(queueEvent{am.sc.serviceName, am.producerConfig.Queue, am.producerConfig.Topic, vm.tid}, videoUUID,
-		fmt.Sprintf("Mapped and sent: [%v]", msgToSend))
-}
-
-func (am *annotationMapper) mapMessage(vm *videoMessage) ([]byte, string, error) {
-	logger.messageEvent(am.consumerConfig.Topic, "Start mapping next video message.")
-	if err := json.Unmarshal([]byte(vm.origMsg.Body), &vm.unmarshalled); err != nil {
-		return nil, "", fmt.Errorf("Video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON: %v", err.Error(), vm.origMsg.Body)
-	}
-	if vm.tid == "" {
-		return nil, "", errors.New("X-Request-Id not found in kafka message headers. Skipping message")
-	}
-	lastModified := vm.origMsg.Headers["Message-Timestamp"]
-	if lastModified == "" {
-		return nil, "", errors.New("Message-Timestamp not found in kafka message headers. Skipping message")
-	}
-	return am.mapNextVideoAnnotations(vm, lastModified)
-}
-
-func (am *annotationMapper) mapNextVideoAnnotations(vm *videoMessage, lastModified string) ([]byte, string, error) {
+func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	videoUUID, err := getStringField(videoUUIDField, vm.unmarshalled, vm)
 	if err != nil {
 		return nil, "", err
@@ -112,8 +47,7 @@ func (am *annotationMapper) mapNextVideoAnnotations(vm *videoMessage, lastModifi
 
 		thingUUID, ok := parseThingUUID(thingID)
 		if !ok {
-			logger.warnMessageEvent(queueEvent{am.sc.serviceName, am.consumerConfig.Queue, am.consumerConfig.Topic, vm.tid}, videoUUID, nil,
-				fmt.Sprintf("Cannot extract thing UUID from annotation id field: %s", thingID))
+			logger.videoEvent(vm.tid, videoUUID, fmt.Sprintf("Cannot extract thing UUID from annotation id field: %s", thingID))
 			continue
 		}
 
@@ -133,7 +67,7 @@ func (am *annotationMapper) mapNextVideoAnnotations(vm *videoMessage, lastModifi
 		nextAnnotations = append(nextAnnotations, ann)
 	}
 
-	thingHandler := thingHandler{am.sc, vm.tid, videoUUID}
+	thingHandler := thingHandler{vm.sc, vm.tid, videoUUID}
 	thingHandler.retrieveThingsDetails(nextAnnotations)
 
 	annHandler := annHandler{videoUUID, vm.tid}
@@ -148,18 +82,7 @@ func (am *annotationMapper) mapNextVideoAnnotations(vm *videoMessage, lastModifi
 	return marshalledPubEvent, videoUUID, nil
 }
 
-func createHeader(origMsgHeaders map[string]string) map[string]string {
-	return map[string]string{
-		"X-Request-Id":      origMsgHeaders["X-Request-Id"],
-		"Message-Timestamp": time.Now().Format(dateFormat),
-		"Message-Id":        uuid.NewV4().String(),
-		"Message-Type":      generatedMsgType,
-		"Content-Type":      "application/json",
-		"Origin-System-Id":  origMsgHeaders["Origin-System-Id"], // TODO here is ok ?
-	}
-}
-
-func getStringField(key string, obj map[string]interface{}, vm *videoMessage) (string, error) {
+func getStringField(key string, obj map[string]interface{}, vm *videoMapper) (string, error) {
 	valueI, ok := obj[key]
 	if !ok {
 		return "", nullFieldError(key, vm)
@@ -172,7 +95,7 @@ func getStringField(key string, obj map[string]interface{}, vm *videoMessage) (s
 	return val, nil
 }
 
-func getObjectsArrayField(key string, obj map[string]interface{}, vm *videoMessage) ([]map[string]interface{}, error) {
+func getObjectsArrayField(key string, obj map[string]interface{}, vm *videoMapper) ([]map[string]interface{}, error) {
 	var objArrayI interface{}
 	objArrayI, ok := obj[key]
 	if !ok {
@@ -196,7 +119,7 @@ func getObjectsArrayField(key string, obj map[string]interface{}, vm *videoMessa
 	return result, nil
 }
 
-func getBoolField(key string, obj map[string]interface{}, vm *videoMessage) (bool, error) {
+func getBoolField(key string, obj map[string]interface{}, vm *videoMapper) (bool, error) {
 	valueI, ok := obj[key]
 	if !ok {
 		return false, nullFieldError(key, vm)
@@ -218,8 +141,8 @@ func parseThingUUID(thingID string) (string, bool) {
 	return "", false
 }
 
-func nullFieldError(fieldKey string, vm *videoMessage) error {
-	return fmt.Errorf("[%s] field of native Next video JSON is missing: [%s]", fieldKey, vm.origMsg.Body)
+func nullFieldError(fieldKey string, vc *videoMapper) error {
+	return fmt.Errorf("[%s] field of native Next video JSON is missing: [%s]", fieldKey, vc.strContent)
 }
 
 func wrongFieldTypeError(expectedType, fieldKey string, value interface{}) error {

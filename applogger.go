@@ -146,3 +146,12 @@ func (appLogger *appLogger) responseEvent(serviceName string, requestURL string,
 		"uuid":           videoUUID,
 	}).Info("Response from " + serviceName)
 }
+
+func (appLogger *appLogger) serviceEvent(transactionID string, err error, message string) {
+	appLogger.log.WithFields(logrus.Fields{
+		"event":          "error",
+		"service_name":   appLogger.serviceName,
+		"transaction_id": transactionID,
+		"error":          err,
+	}).Warn(message)
+}
