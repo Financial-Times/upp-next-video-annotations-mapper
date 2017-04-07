@@ -224,7 +224,7 @@ func emptyResponsePublicThingsAPIMock(writer http.ResponseWriter, request *http.
 }
 
 func invalidContentMock(writer http.ResponseWriter, request *http.Request) {
-	fillResponseFromFile("public-things-api-output_invalid_format.json", writer, request)
+	fillResponseFromFile("invalid_format.json", writer, request)
 }
 
 func fillResponseFromFile(fileName string, writer http.ResponseWriter, request *http.Request) {

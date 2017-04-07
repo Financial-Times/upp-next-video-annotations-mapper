@@ -41,6 +41,11 @@ func TestMapRequest(t *testing.T) {
 			"",
 			http.StatusBadRequest,
 		},
+		{
+			"invalid-format.json",
+			"",
+			http.StatusBadRequest,
+		},
 	}
 
 	for _, test := range tests {
