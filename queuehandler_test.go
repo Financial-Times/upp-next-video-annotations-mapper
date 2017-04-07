@@ -76,7 +76,7 @@ func TestQueueConsume(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		mockMsgProducer := mockMessageProducer {}
+		mockMsgProducer := mockMessageProducer{}
 		var msgProducer producer.MessageProducer
 		msgProducer = &mockMsgProducer
 		h := queueHandler{
