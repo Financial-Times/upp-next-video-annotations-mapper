@@ -74,6 +74,6 @@ func createHeader(origMsgHeaders map[string]string) map[string]string {
 		"Message-Id":        uuid.NewV4().String(),
 		"Message-Type":      generatedMsgType,
 		"Content-Type":      "application/json",
-		"Origin-System-Id":  origMsgHeaders["Origin-System-Id"], // TODO here is ok ?
+		"Origin-System-Id":  origMsgHeaders["Origin-System-Id"],
 	}
 }

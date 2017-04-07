@@ -55,7 +55,7 @@ type annHandler struct {
 	transactionID string
 }
 
-func (h annHandler) createAnnotations(nextAnns []nextAnnotation) *ConceptSuggestion {
+func (h annHandler) createAnnotations(nextAnns []annotation) *ConceptSuggestion {
 	var suggestions = make([]suggestion, 0)
 	for _, nextAnn := range nextAnns {
 		suggestionsForAnn, ok := h.createAnnotation(nextAnn)
@@ -71,7 +71,7 @@ func (h annHandler) createAnnotations(nextAnns []nextAnnotation) *ConceptSuggest
 	return &ConceptSuggestion{h.videoUUID, suggestions}
 }
 
-func (h annHandler) createAnnotation(nextAnn nextAnnotation) ([]suggestion, bool) {
+func (h annHandler) createAnnotation(nextAnn annotation) ([]suggestion, bool) {
 	predicates := getPredicate(nextAnn.thing.directType, nextAnn.primaryFlag)
 	if len(predicates) == 0 {
 		logger.thingEvent(h.transactionID, nextAnn.thing.uuid, h.videoUUID,

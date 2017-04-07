@@ -19,7 +19,7 @@ type videoMapper struct {
 	unmarshalled map[string]interface{}
 }
 
-type nextAnnotation struct {
+type annotation struct {
 	thingID     string
 	thingText   string
 	primaryFlag bool
@@ -37,7 +37,29 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		return nil, videoUUID, err
 	}
 
-	var nextAnnotations = make([]nextAnnotation, 0)
+	annotations := vm.buildAnnotations(nextAnnsArray, videoUUID)
+
+	if len(annotations) == 0 {
+		return nil, videoUUID, fmt.Errorf("No annotation could be retrieved for Next video: [%s]", vm.strContent)
+	}
+
+	thingHandler := thingHandler{vm.sc, vm.tid, videoUUID}
+	thingHandler.retrieveThingsDetails(annotations)
+
+	annHandler := annHandler{videoUUID, vm.tid}
+	conceptSuggestion := annHandler.createAnnotations(annotations)
+
+	marshalledPubEvent, err := json.Marshal(*conceptSuggestion)
+	if err != nil {
+		logger.videoEvent(vm.tid, videoUUID, "Error marshalling processed annotations")
+		return nil, videoUUID, err
+	}
+
+	return marshalledPubEvent, videoUUID, nil
+}
+
+func (vm *videoMapper) buildAnnotations(nextAnnsArray []map[string]interface{}, videoUUID string) []annotation {
+	var annotations = make([]annotation, 0)
 	for _, ann := range nextAnnsArray {
 		thingID, err := getStringField(annotationIdField, ann, vm)
 		if err != nil {
@@ -58,28 +80,15 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 			continue
 		}
 
-		ann := nextAnnotation{
+		ann := annotation{
 			thingID:     thingID,
 			thingText:   thingName,
 			primaryFlag: thingPrimaryFlag,
 			thing:       &thingInfo{uuid: thingUUID},
 		}
-		nextAnnotations = append(nextAnnotations, ann)
+		annotations = append(annotations, ann)
 	}
-
-	thingHandler := thingHandler{vm.sc, vm.tid, videoUUID}
-	thingHandler.retrieveThingsDetails(nextAnnotations)
-
-	annHandler := annHandler{videoUUID, vm.tid}
-	conceptSuggestion := annHandler.createAnnotations(nextAnnotations)
-
-	marshalledPubEvent, err := json.Marshal(*conceptSuggestion)
-	if err != nil {
-		logger.videoEvent(vm.tid, videoUUID, "Error marshalling processed annotations")
-		return nil, videoUUID, err
-	}
-
-	return marshalledPubEvent, videoUUID, nil
+	return annotations
 }
 
 func getStringField(key string, obj map[string]interface{}, vm *videoMapper) (string, error) {
@@ -141,8 +150,8 @@ func parseThingUUID(thingID string) (string, bool) {
 	return "", false
 }
 
-func nullFieldError(fieldKey string, vc *videoMapper) error {
-	return fmt.Errorf("[%s] field of native Next video JSON is missing: [%s]", fieldKey, vc.strContent)
+func nullFieldError(fieldKey string, vm *videoMapper) error {
+	return fmt.Errorf("[%s] field of native Next video JSON is missing: [%s]", fieldKey, vm.strContent)
 }
 
 func wrongFieldTypeError(expectedType, fieldKey string, value interface{}) error {

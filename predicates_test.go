@@ -8,9 +8,9 @@ import (
 func TestGetPredicates(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		thingType   string
-		primaryFlag bool
-		predicates  []string
+		thingType          string
+		primaryFlag        bool
+		expectedPredicates []string
 	}{
 		{
 			"http://www.ft.com/ontology/person/Person",
@@ -41,6 +41,6 @@ func TestGetPredicates(t *testing.T) {
 
 	for _, test := range tests {
 		predicates := getPredicate(test.thingType, test.primaryFlag)
-		assert.Equal(test.predicates, predicates)
+		assert.Equal(test.expectedPredicates, predicates, "Wrong predicate. Input type: %s, primaryFlag: %t", test.thingType, test.primaryFlag)
 	}
 }

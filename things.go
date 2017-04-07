@@ -26,9 +26,9 @@ type thingInfo struct {
 	prefLabel  string
 }
 
-func (t *thingHandler) retrieveThingsDetails(nextAnns []nextAnnotation) {
+func (t *thingHandler) retrieveThingsDetails(annotations []annotation) {
 	var waitGroup sync.WaitGroup
-	for _, nextAnn := range nextAnns {
+	for _, ann := range annotations {
 		waitGroup.Add(1)
 		go func(thing *thingInfo) {
 			defer waitGroup.Done()
@@ -51,7 +51,7 @@ func (t *thingHandler) retrieveThingsDetails(nextAnns []nextAnnotation) {
 			thing.directType = directType
 			thing.prefLabel = prefLabel
 
-		}(nextAnn.thing)
+		}(ann.thing)
 	}
 
 	waitGroup.Wait()
@@ -62,7 +62,7 @@ func (t *thingHandler) getThing(thingUUID string) (*http.Response, bool) {
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		logger.errorEvent(t.publicThingsAppName, requestURL, t.transactionID, err, thingUUID, t.videoUUID,
-			fmt.Sprintf("Cannot reach %s host. Status code: %s", t.publicThingsAppName, http.StatusInternalServerError))
+			fmt.Sprintf("Cannot reach %s host. Status code: %v", t.publicThingsAppName, http.StatusInternalServerError))
 		return nil, false
 	}
 
@@ -74,7 +74,7 @@ func (t *thingHandler) getThing(thingUUID string) (*http.Response, bool) {
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.errorEvent(t.publicThingsAppName, req.URL.String(), req.Header.Get(tid.TransactionIDHeader), err, thingUUID, t.videoUUID,
-			fmt.Sprintf("Cannot reach %s host. Status code: %s", t.publicThingsAppName, http.StatusServiceUnavailable))
+			fmt.Sprintf("Cannot reach %s host. Status code: %v", t.publicThingsAppName, http.StatusServiceUnavailable))
 		return nil, false
 	}
 
@@ -117,6 +117,9 @@ func (t *thingHandler) getThingDetails(response *http.Response, thingUUID string
 }
 
 func cleanupResp(resp *http.Response, log *logrus.Logger) {
+	if resp == nil {
+		return
+	}
 	_, err := io.Copy(ioutil.Discard, resp.Body)
 	if err != nil {
 		log.Warningf("[%v]", err)
@@ -131,7 +134,7 @@ func (t *thingHandler) getThingStringField(key string, obj map[string]interface{
 	resultI, ok := obj[key]
 	if !ok {
 		logger.thingEvent(t.transactionID, thingUUID, t.videoUUID,
-			fmt.Sprintf("%v field not found within %s response. Body: [%v]", key, t.publicThingsAppName, fmt.Sprint(thingBytes)))
+			fmt.Sprintf("%v field not found within %s response. Body: [%v]", key, t.publicThingsAppName, fmt.Sprint(string(thingBytes))))
 		return "", false
 	}
 
