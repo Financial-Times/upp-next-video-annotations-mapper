@@ -22,6 +22,7 @@ func init() {
 	testMap["objArray"] = objArray
 
 	testMap["emptyObjArray"] = make([]interface{}, 0)
+	testMap["invalidObjInArray"] = []string {"value"}
 }
 
 func TestBuildAnnotations(t *testing.T) {
@@ -233,6 +234,11 @@ func TestGetObjectsArrayField(t *testing.T) {
 			"emptyObjArray",
 			make([]map[string]interface{}, 0),
 			false,
+		},
+		{
+			"invalidObjInArray",
+			nil,
+			true,
 		},
 	}
 
