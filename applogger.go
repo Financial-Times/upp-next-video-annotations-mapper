@@ -80,6 +80,15 @@ func (appLogger *appLogger) videoEvent(transactionID string, videoUUID string, m
 	}).Warn(message)
 }
 
+func (appLogger *appLogger) videoMapEvent(transactionID string, videoUUID string, message string) {
+	appLogger.log.WithFields(logrus.Fields{
+		"event":          "map",
+		"service_name":   appLogger.serviceName,
+		"transaction_id": transactionID,
+		"uuid":           videoUUID,
+	}).Info(message)
+}
+
 func (appLogger *appLogger) videoErrorEvent(transactionID string, videoUUID string, err error, message string) {
 	appLogger.log.WithFields(logrus.Fields{
 		"event":          "error",

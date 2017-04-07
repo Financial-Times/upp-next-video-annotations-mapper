@@ -1,10 +1,10 @@
 package main
 
 import (
-	"io/ioutil"
-	"net/http"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 )
 
 type serviceHandler struct {
@@ -23,6 +23,10 @@ func (h serviceHandler) mapRequest(w http.ResponseWriter, r *http.Request) {
 	mappedVideoBytes, _, err := h.mapNextVideoAnnotationsRequest(&vm)
 	if err != nil {
 		writerBadRequest(w, err, tid)
+	}
+
+	if mappedVideoBytes == nil {
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")

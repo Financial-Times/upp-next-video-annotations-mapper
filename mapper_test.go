@@ -76,7 +76,7 @@ func TestBuildAnnotations(t *testing.T) {
 	}
 	for _, test := range tests {
 		Anns := vm.buildAnnotations(test.nextAnns, "")
-		assert.Equal(test.expectedAnns, Anns, "Annotations not as expected. Test input: [%v]", test.nextAnns)
+		assert.Equal(test.expectedAnns, Anns, "Annotations are wrong. Test input: [%v]", test.nextAnns)
 	}
 }
 
@@ -88,11 +88,11 @@ func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
 	}{
 		{
 			"next-video-no-anns-input.json",
-			true,
+			false,
 		},
 		{
 			"next-video-empty-anns-input.json",
-			true,
+			false,
 		},
 		{
 			"next-video-no-videouuid-input.json",
@@ -107,7 +107,33 @@ func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
 		}
 		vm := videoMapper{unmarshalled: nextVideo}
 		_, _, err = vm.mapNextVideoAnnotations()
-		assert.Equal(test.errStatus, err != nil, "Error status wrong for input JSON: %s", test.fileName)
+		assert.Equal(test.errStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
+	}
+}
+
+func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
+	assert := assert.New(t)
+	tests := []struct {
+		fileName  string
+		expectedContentNil bool
+		expectedErrStatus bool
+	}{
+		{
+			"next-video-delete-input.json",
+			true,
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		nextVideo, err := readContent(test.fileName)
+		if err != nil {
+			assert.Fail(err.Error())
+		}
+		vm := videoMapper{unmarshalled: nextVideo}
+		marshalledContent, _, err := vm.mapNextVideoAnnotations()
+		assert.Equal(test.expectedContentNil, marshalledContent == nil, "Marshalled content nil status wrong. Input JSON: %s", test.fileName)
+		assert.Equal(test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
 	}
 }
 
@@ -175,7 +201,7 @@ func TestGetBoolField(t *testing.T) {
 	}
 }
 
-func TestGetObjectArrayField(t *testing.T) {
+func TestGetObjectsArrayField(t *testing.T) {
 	assert := assert.New(t)
 	vm := videoMapper{}
 	var objArray = make([]map[string]interface{}, 0)
@@ -201,7 +227,7 @@ func TestGetObjectArrayField(t *testing.T) {
 		{
 			"no_key",
 			nil,
-			true,
+			false,
 		},
 		{
 			"emptyObjArray",
@@ -211,8 +237,8 @@ func TestGetObjectArrayField(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := getObjectsArrayField(test.key, testMap, &vm)
-		assert.Equal(test.expectedValue, result, "Expected value is wrong. Map key: %s", test.key)
+		result, err := getObjectsArrayField(test.key, testMap, "videoUUID", &vm)
+		assert.Equal(test.expectedValue, result, "Value is wrong. Map key: %s", test.key)
 		assert.Equal(test.expectedIsErr, err != nil, "Error status is wrong. Map key: %s", test.key)
 	}
 }

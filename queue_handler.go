@@ -44,6 +44,11 @@ func (h *queueHandler) queueConsume(m consumer.Message) {
 			"Error mapping the message from queue")
 		return
 	}
+
+	if marshalledEvent == nil {
+		return
+	}
+
 	headers := createHeader(m.Headers)
 	msgToSend := string(marshalledEvent)
 	err = (*h.messageProducer).SendMessage("", producer.Message{Headers: headers, Body: msgToSend})

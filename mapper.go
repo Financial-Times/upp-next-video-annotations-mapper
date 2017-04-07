@@ -11,6 +11,7 @@ const annotationsField = "annotations"
 const annotationIdField = "id"
 const annotationNameField = "name"
 const annotationPrimaryField = "primary"
+const deletedField = "deleted"
 
 type videoMapper struct {
 	sc           serviceConfig
@@ -32,15 +33,24 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		return nil, "", err
 	}
 
-	nextAnnsArray, err := getObjectsArrayField(annotationsField, vm.unmarshalled, vm)
-	if err != nil {
+	if vm.isDeleteEvent() {
+		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprintf("Ignoring delete Next video message. [%s]", vm.strContent))
+		return nil, videoUUID, nil
+	}
+
+	nextAnnsArray, err := getObjectsArrayField(annotationsField, vm.unmarshalled, videoUUID, vm)
+	switch {
+	case err != nil:
 		return nil, videoUUID, err
+	case nextAnnsArray == nil:
+		return nil, videoUUID, nil
 	}
 
 	annotations := vm.buildAnnotations(nextAnnsArray, videoUUID)
 
 	if len(annotations) == 0 {
-		return nil, videoUUID, fmt.Errorf("No annotation could be retrieved for Next video: [%s]", vm.strContent)
+		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprintf("No annotation could be retrieved for Next video: [%s]", vm.strContent))
+		return nil, videoUUID, nil
 	}
 
 	thingHandler := thingHandler{vm.sc, vm.tid, videoUUID}
@@ -104,11 +114,12 @@ func getStringField(key string, obj map[string]interface{}, vm *videoMapper) (st
 	return val, nil
 }
 
-func getObjectsArrayField(key string, obj map[string]interface{}, vm *videoMapper) ([]map[string]interface{}, error) {
+func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID string, vm *videoMapper) ([]map[string]interface{}, error) {
 	var objArrayI interface{}
 	objArrayI, ok := obj[key]
 	if !ok {
-		return nil, nullFieldError(key, vm)
+		logger.videoMapEvent(vm.tid, videoUUID, nullFieldError(key, vm).Error())
+		return nil, nil
 	}
 
 	var objArray []interface{}
@@ -156,4 +167,11 @@ func nullFieldError(fieldKey string, vm *videoMapper) error {
 
 func wrongFieldTypeError(expectedType, fieldKey string, value interface{}) error {
 	return fmt.Errorf("[%s] field of native Next video JSON is not of type %s: [%v]", fieldKey, expectedType, value)
+}
+
+func (vm *videoMapper) isDeleteEvent() bool {
+	if _, present := vm.unmarshalled[deletedField]; present {
+		return true
+	}
+	return false
 }
