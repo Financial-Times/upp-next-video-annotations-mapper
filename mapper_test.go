@@ -22,7 +22,6 @@ func init() {
 	testMap["objArray"] = objArray
 
 	testMap["emptyObjArray"] = make([]interface{}, 0)
-	testMap["invalidObjInArray"] = []string {"value"}
 }
 
 func TestBuildAnnotations(t *testing.T) {
@@ -81,11 +80,52 @@ func TestBuildAnnotations(t *testing.T) {
 	}
 }
 
+func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
+	startPublicThingsAPIMock(scenarioHappy)
+	defer stopService()
+
+	assert := assert.New(t)
+	tests := []struct {
+		fileName          string
+		expectedContent   string
+		expectedVideoUUID string
+		expectedErrStatus bool
+	}{
+		{
+			"next-video-input.json",
+			newStringConceptSuggestion(t, "e2290d14-7e80-4db8-a715-949da4de9a07",
+				newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "http://www.ft.com/ontology/Section", "isClassifiedBy", "Financials"),
+			),
+			"e2290d14-7e80-4db8-a715-949da4de9a07",
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		nextVideo, err := readContent(test.fileName)
+		if err != nil {
+			assert.Fail(err.Error())
+		}
+		vm := videoMapper{
+			sc: serviceConfig{
+				publicThingsURI: publicThingsAPIURLMock(),
+			},
+			unmarshalled: nextVideo,
+		}
+
+		marshalledContent, videoUUID, err := vm.mapNextVideoAnnotations()
+
+		assert.Equal(test.expectedContent, string(marshalledContent), "Marshalled content wrong. Input JSON: %s", test.fileName)
+		assert.Equal(test.expectedVideoUUID, videoUUID, "Video UUID wrong. Input JSON: %s", test.fileName)
+		assert.Equal(test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
+	}
+}
+
 func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		fileName  string
-		errStatus bool
+		fileName          string
+		expectedErrStatus bool
 	}{
 		{
 			"next-video-no-anns-input.json",
@@ -94,6 +134,10 @@ func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
 		{
 			"next-video-empty-anns-input.json",
 			false,
+		},
+		{
+			"next-video-invalid-anns-input.json",
+			true,
 		},
 		{
 			"next-video-no-videouuid-input.json",
@@ -108,16 +152,16 @@ func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
 		}
 		vm := videoMapper{unmarshalled: nextVideo}
 		_, _, err = vm.mapNextVideoAnnotations()
-		assert.Equal(test.errStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
+		assert.Equal(test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
 	}
 }
 
 func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		fileName  string
+		fileName           string
 		expectedContentNil bool
-		expectedErrStatus bool
+		expectedErrStatus  bool
 	}{
 		{
 			"next-video-delete-input.json",
@@ -235,11 +279,6 @@ func TestGetObjectsArrayField(t *testing.T) {
 			make([]map[string]interface{}, 0),
 			false,
 		},
-		{
-			"invalidObjInArray",
-			nil,
-			true,
-		},
 	}
 
 	for _, test := range tests {
@@ -317,4 +356,13 @@ func readContent(fileName string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func newStringConceptSuggestion(t *testing.T, videoUUID string, s suggestion) string {
+	cs := newConceptSuggestion(videoUUID, s)
+	marshalledContent, err := json.Marshal(cs)
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+	return string(marshalledContent)
 }

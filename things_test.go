@@ -15,8 +15,8 @@ import (
 const scenarioHappy = "happy"
 const scenarioNotHappy = "not_happy"
 
-const thingUUID_1 = "1"
-const thingUUID_2 = "2"
+const thingUUID_1 = "a54fda40-7fe7-339a-9b83-2d7b964ff3a4"
+const thingUUID_2 = "71a5efa5-e6e0-3ce1-9190-a7eac8bef325"
 const thingUUID_3 = "empty_response"
 
 var publicThingsAPIMock *httptest.Server
