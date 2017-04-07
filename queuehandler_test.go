@@ -76,12 +76,14 @@ func TestQueueConsume(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		mockMsgProducer, underlyingProducer := newMockMessageProducer()
+		mockMsgProducer := mockMessageProducer {}
+		var msgProducer producer.MessageProducer
+		msgProducer = &mockMsgProducer
 		h := queueHandler{
 			sc: serviceConfig{
 				publicThingsURI: publicThingsAPIURLMock(),
 			},
-			messageProducer: &mockMsgProducer,
+			messageProducer: &msgProducer,
 		}
 
 		msg := consumer.Message{
@@ -90,9 +92,9 @@ func TestQueueConsume(t *testing.T) {
 		}
 		h.queueConsume(msg)
 
-		assert.Equal(test.expectedMsgSent, underlyingProducer.sendCalled,
+		assert.Equal(test.expectedMsgSent, mockMsgProducer.sendCalled,
 			"Message sending check is wrong. Input JSON file: %s, Origin-System-Id: %s, X-Request-Id: %s", test.fileName, test.originSystem, test.tid)
-		assert.Equal(test.expectedContent, underlyingProducer.message,
+		assert.Equal(test.expectedContent, mockMsgProducer.message,
 			"Marshalled content wrong. Input JSON file: %s, Origin-System-Id: %s, X-Request-Id: %s", test.fileName, test.originSystem, test.tid)
 	}
 }
@@ -110,6 +112,11 @@ func (mock *mockMessageProducer) SendMessage(uuid string, message producer.Messa
 	return nil
 }
 
+func (mock *mockMessageProducer) ConnectivityCheck() (string, error) {
+	// do nothing
+	return "", nil
+}
+
 func getBytes(fileName string, t *testing.T) []byte {
 	bytes, err := ioutil.ReadFile("test-resources/" + fileName)
 	if err != nil {
@@ -118,10 +125,4 @@ func getBytes(fileName string, t *testing.T) []byte {
 	}
 
 	return bytes
-}
-
-func newMockMessageProducer() (producer.MessageProducer, *mockMessageProducer) {
-	mock := mockMessageProducer{}
-	// TODO reanalyse this; couldn't make it compile using a single return instance
-	return &mock, &mock
 }
