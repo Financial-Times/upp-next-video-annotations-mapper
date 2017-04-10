@@ -7,7 +7,6 @@ import (
 const predIsClassifiedBy = "isClassifiedBy"
 const predIsPrimarilyClassifiedBy = "isPrimarilyClassifiedBy"
 const predAbout = "about"
-const predMentions = "mentions"
 const predMajorMentions = "majorMentions"
 
 const typePersonURI = "http://www.ft.com/ontology/person/Person"
@@ -28,7 +27,7 @@ var typeToPredicate = map[string]string{
 	typeBrandURI + "false":            predIsClassifiedBy,
 	typeGenreURI + "false":            predIsClassifiedBy,
 	typeLocationURI + "true":          predAbout,
-	typeLocationURI + "false":         predMentions,
+	typeLocationURI + "false":         predMajorMentions,
 	typeOrganisationURI + "true":      predAbout,
 	typeOrganisationURI + "false":     predMajorMentions,
 	typeSectionURI + "true":           predIsPrimarilyClassifiedBy,
@@ -37,7 +36,7 @@ var typeToPredicate = map[string]string{
 	typeSpecialReportURI + "false":    predIsClassifiedBy,
 	typeSubjectURI + "false":          predIsClassifiedBy,
 	typeTopicUTI + "true":             predAbout,
-	typeTopicUTI + "false":            predMentions,
+	typeTopicUTI + "false":            predMajorMentions,
 }
 
 func getPredicate(thingType string, primaryFlag bool) []string {
