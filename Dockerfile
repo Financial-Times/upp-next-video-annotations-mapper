@@ -2,7 +2,7 @@ FROM alpine:3.5
 
 COPY . /upp-next-video-annotations-mapper/
 
-RUN apk --no-cache --virtual .build-dependencies add git go ca-certificates \
+RUN apk --no-cache --virtual .build-dependencies add git go libc-dev ca-certificates \
   && export GOPATH=/gopath \
   && REPO_PATH="github.com/Financial-Times/upp-next-video-annotations-mapper" \
   && cd upp-next-video-annotations-mapper \
