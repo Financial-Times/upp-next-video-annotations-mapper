@@ -1,8 +1,8 @@
-FROM alpine:3.4
+FROM alpine:3.5
 
 COPY . /upp-next-video-annotations-mapper/
 
-RUN apk --update add git go ca-certificates \
+RUN apk --no-cache --virtual .build-dependencies add git go ca-certificates \
   && export GOPATH=/gopath \
   && REPO_PATH="github.com/Financial-Times/upp-next-video-annotations-mapper" \
   && cd upp-next-video-annotations-mapper \
@@ -21,7 +21,7 @@ RUN apk --update add git go ca-certificates \
   && go test ./... \
   && go build -ldflags="${LDFLAGS}" \
   && mv upp-next-video-annotations-mapper /upp-next-video-annotations-mapper-app \
-  && apk del go git \
+  && apk del .build-dependencies \
   && rm -rf $GOPATH /var/cache/apk/*
 
 CMD ["/upp-next-video-annotations-mapper-app"]
