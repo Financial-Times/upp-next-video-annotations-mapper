@@ -354,7 +354,7 @@ Body:
 }
 ```
 
-400 If the mapping couldn't be performed because of invalid provided content.
+400 - If the mapping couldn't be performed because of invalid provided content.
 
 ### Admin endpoints
 Healthchecks: [http://localhost:8084/__health](http://localhost:8084/__health)
