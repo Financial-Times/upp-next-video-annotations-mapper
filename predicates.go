@@ -42,9 +42,10 @@ var typeToPredicate = map[string]string{
 func getPredicate(thingType string, primaryFlag bool) []string {
 	predicate, ok := typeToPredicate[thingType+strconv.FormatBool(primaryFlag)]
 	var predicates = make([]string, 0)
-	if ok {
+	switch {
+	case ok:
 		predicates = append(predicates, predicate)
-	} else if primaryFlag {
+	case primaryFlag:
 		predicate, ok = typeToPredicate[thingType+strconv.FormatBool(false)]
 		if ok && predicate == predIsClassifiedBy {
 			predicates = append(predicates, predIsPrimarilyClassifiedBy, predIsClassifiedBy)
