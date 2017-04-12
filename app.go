@@ -27,10 +27,6 @@ type serviceConfig struct {
 	serviceName               string
 	appPort                   string
 	cacheControlPolicy        string
-	publicThingsURI           string
-	publicThingsAppName       string
-	publicThingsAppHealthURI  string
-	publicThingsAppPanicGuide string
 	envAPIHost                string
 	graphiteTCPAddress        string
 	graphitePrefix            string
@@ -50,31 +46,6 @@ func main() {
 		Value:  "no-store",
 		Desc:   "Cache control policy header",
 		EnvVar: "CACHE_CONTROL_POLICY",
-	})
-	publicThingsURI := app.String(cli.StringOpt{
-		Name:   "public-things-uri",
-		Value:  "http://localhost:8080/__public-things-api/things/",
-		Desc:   "Public Things URI",
-		EnvVar: "PUBLIC_THINGS_URI",
-	})
-	publicThingsAppName := app.String(cli.StringOpt{
-		Name:   "public-things-app-name",
-		Value:  "Public Things Service",
-		Desc:   "Service name of the public things application",
-		EnvVar: "PUBLIC_THINGS_APP_NAME",
-	})
-	publicThingsAppHealthURI := app.String(cli.StringOpt{
-		Name:   "public-things-app-health-uri",
-		Value:  "http://localhost:8080/__public-things-api/__health",
-		Desc:   "URI of the Public Things Application health endpoint",
-		EnvVar: "PUBLIC_THINGS_APP_HEALTH_URI",
-	})
-	// TODO provide correct panic guide (on service file also)
-	publicThingsAppPanicGuide := app.String(cli.StringOpt{
-		Name:   "public-things-app-panic-guide",
-		Value:  "https://sites.google.com/a/ft.com/dynamic-publishing-team/public-things-panic-guide",
-		Desc:   "Public things appllication panic guide url for healthcheck. Default panic guide is for public things.",
-		EnvVar: "PUBLIC_THINGS_APP_PANIC_GUIDE",
 	})
 	envAPIHost := app.String(cli.StringOpt{
 		Name:   "env-api-host",
@@ -141,10 +112,6 @@ func main() {
 			serviceName:               *serviceName,
 			appPort:                   *appPort,
 			cacheControlPolicy:        *cacheControlPolicy,
-			publicThingsURI:           *publicThingsURI,
-			publicThingsAppName:       *publicThingsAppName,
-			publicThingsAppHealthURI:  *publicThingsAppHealthURI,
-			publicThingsAppPanicGuide: *publicThingsAppPanicGuide,
 			graphiteTCPAddress:        *graphiteTCPAddress,
 			graphitePrefix:            *graphitePrefix,
 			envAPIHost:                *envAPIHost,
@@ -167,7 +134,8 @@ func main() {
 		annMapper.init()
 
 		h := serviceHandler{sc}
-		go listen(sc, h)
+		hc := healthCheck{client: http.Client{}, consumerConf: consumerConfig, producerConf: producerConfig}
+		go listen(sc, h, hc)
 
 		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
 	}
@@ -177,12 +145,12 @@ func main() {
 	}
 }
 
-func listen(sc serviceConfig, h serviceHandler) {
+func listen(sc serviceConfig, h serviceHandler, hc healthCheck) {
 	r := mux.NewRouter()
 	r.Path("/map").Handler(handlers.MethodHandler{"POST": http.HandlerFunc(h.mapRequest)})
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
-	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(sc.serviceName, serviceDescription, sc.publicThingsAppCheck()))})
+	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(sc.serviceName, serviceDescription, hc.check()))})
 
 	logger.serviceStartedEvent(sc.asMap())
 
@@ -213,10 +181,6 @@ func (sc serviceConfig) asMap() map[string]interface{} {
 		"service-name":                 sc.serviceName,
 		"service-port":                 sc.appPort,
 		"cache-control-policy":         sc.cacheControlPolicy,
-		"public-things-app":            sc.publicThingsAppName,
-		"public-things-uri":            sc.publicThingsURI,
-		"public-things-app-health-uri": sc.publicThingsAppHealthURI,
-		"public-things-app-guide":      sc.publicThingsAppPanicGuide,
 		"env-api-host":                 sc.envAPIHost,
 		"graphite-tcp-address":         sc.graphiteTCPAddress,
 		"graphite-prefix":              sc.graphitePrefix,

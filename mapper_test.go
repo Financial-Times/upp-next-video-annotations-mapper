@@ -33,43 +33,15 @@ func TestBuildAnnotations(t *testing.T) {
 	}{
 		{
 			[]map[string]interface{}{
-				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "text1", false),
+				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"),
 			},
 			[]annotation{
-				newAnnWithoutThingDetail("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "text1", false, "d969d76e-f8f4-34ae-bc38-95cfd0884740"),
+				newAnnWithoutThingDetail("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"),
 			},
 		},
 		{
 			[]map[string]interface{}{
-				newNextAnnotation("", "text1", false),
-			},
-			[]annotation{},
-		},
-		{
-			[]map[string]interface{}{
-				newNextAnnotation(nil, "text1", false),
-			},
-			[]annotation{},
-		},
-		{
-			[]map[string]interface{}{
-				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "", false),
-			},
-			[]annotation{
-				newAnnWithoutThingDetail("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "", false, "d969d76e-f8f4-34ae-bc38-95cfd0884740"),
-			},
-		},
-		{
-			[]map[string]interface{}{
-				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", nil, false),
-			},
-			[]annotation{
-				newAnnWithoutThingDetail("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "", false, "d969d76e-f8f4-34ae-bc38-95cfd0884740"),
-			},
-		},
-		{
-			[]map[string]interface{}{
-				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "text1", nil),
+				newNextAnnotation(nil, "mentions"),
 			},
 			[]annotation{},
 		},
@@ -81,9 +53,6 @@ func TestBuildAnnotations(t *testing.T) {
 }
 
 func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
-	startPublicThingsAPIMock(scenarioHappy)
-	defer stopService()
-
 	assert := assert.New(t)
 	tests := []struct {
 		fileName          string
@@ -94,7 +63,7 @@ func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
 		{
 			"next-video-input.json",
 			newStringConceptSuggestion(t, "e2290d14-7e80-4db8-a715-949da4de9a07",
-				newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "http://www.ft.com/ontology/Section", "isClassifiedBy", "Financials"),
+				newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy"),
 			),
 			"e2290d14-7e80-4db8-a715-949da4de9a07",
 			false,
@@ -107,9 +76,7 @@ func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
 			assert.Fail(err.Error())
 		}
 		vm := videoMapper{
-			sc: serviceConfig{
-				publicThingsURI: publicThingsAPIURLMock(),
-			},
+			sc: serviceConfig{},
 			unmarshalled: nextVideo,
 		}
 
@@ -319,28 +286,21 @@ func TestParseThingUUID(t *testing.T) {
 	}
 }
 
-func newNextAnnotation(id interface{}, name interface{}, primaryFlag interface{}) map[string]interface{} {
+func newNextAnnotation(id interface{}, predicate interface{}) map[string]interface{} {
 	var obj = make(map[string]interface{})
 	if id != nil {
 		obj[annotationIdField] = id
 	}
-	if name != nil {
-		obj[annotationNameField] = name
-	}
-	if primaryFlag != nil {
-		obj[annotationPrimaryField] = primaryFlag
+	if predicate != nil {
+		obj[annotationPredicateField] = predicate
 	}
 	return obj
 }
 
-func newAnnWithoutThingDetail(id string, name string, primaryFlag bool, thingUUID string) annotation {
+func newAnnWithoutThingDetail(id string, predicate string) annotation {
 	return annotation{
 		thingID:     id,
-		thingText:   name,
-		primaryFlag: primaryFlag,
-		thing: &thingInfo{
-			uuid: thingUUID,
-		},
+		predicate:   predicate,
 	}
 }
 

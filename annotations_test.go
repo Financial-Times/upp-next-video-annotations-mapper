@@ -19,27 +19,12 @@ func TestAnnotationsCreation(t *testing.T) {
 	}{
 		{
 			[]annotation{
-				newAnnotation("id1", false, "http://www.ft.com/ontology/SpecialReport", "report1"),
-				newAnnotation("id2", true, "http://www.ft.com/ontology/SpecialReport", "report2"),
+				newAnnotation("id1", "isClassifiedBy"),
+				newAnnotation("id2", "about"),
 			},
 			newConceptSuggestion(videoUUID,
-				newSuggestion("id1", "http://www.ft.com/ontology/SpecialReport", "isClassifiedBy", "report1"),
-				newSuggestion("id2", "http://www.ft.com/ontology/SpecialReport", "isPrimarilyClassifiedBy", "report2"),
-			),
-		},
-		{
-			[]annotation{
-				newAnnotation("id1", false, "unknown_type", "report1"),
-			},
-			ConceptSuggestion{videoUUID, []suggestion{}},
-		},
-		{
-			[]annotation{
-				newAnnotation("id1", false, "", ""),
-				newAnnotation("id2", true, "http://www.ft.com/ontology/SpecialReport", "report2"),
-			},
-			newConceptSuggestion(videoUUID,
-				newSuggestion("id2", "http://www.ft.com/ontology/SpecialReport", "isPrimarilyClassifiedBy", "report2"),
+				newSuggestion("id1", "isClassifiedBy"),
+				newSuggestion("id2", "about"),
 			),
 		},
 	}
@@ -51,23 +36,19 @@ func TestAnnotationsCreation(t *testing.T) {
 	}
 }
 
-func newAnnotation(thingID string, primaryFlag bool, thingType string, thingLabel string) annotation {
+func newAnnotation(thingID string, predicate string) annotation {
 	return annotation{
 		thingID:     thingID,
-		primaryFlag: primaryFlag,
-		thing: &thingInfo{
-			directType: thingType,
-			prefLabel:  thingLabel,
-		},
+		predicate: predicate,
 	}
 }
 
-func newSuggestion(thingID string, thingType string, predicate string, thingLabel string) suggestion {
+func newSuggestion(thingID string, predicate string) suggestion {
 	thing := thing{
 		ID:        thingID,
-		PrefLabel: thingLabel,
+		PrefLabel: "",
 		Predicate: predicate,
-		Types:     []string{thingType},
+		Types:     []string{},
 	}
 
 	return suggestion{Thing: thing, Provenance: provenances}

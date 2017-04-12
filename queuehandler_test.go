@@ -18,9 +18,6 @@ type mockMessageProducer struct {
 }
 
 func TestQueueConsume(t *testing.T) {
-	startPublicThingsAPIMock(scenarioHappy)
-	defer stopService()
-
 	assert := assert.New(t)
 	tests := []struct {
 		fileName        string
@@ -35,7 +32,7 @@ func TestQueueConsume(t *testing.T) {
 			"1234",
 			true,
 			newStringConceptSuggestion(t, "e2290d14-7e80-4db8-a715-949da4de9a07",
-				newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "http://www.ft.com/ontology/Section", "isClassifiedBy", "Financials"),
+				newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy"),
 			),
 		},
 		{
@@ -81,7 +78,6 @@ func TestQueueConsume(t *testing.T) {
 		msgProducer = &mockMsgProducer
 		h := queueHandler{
 			sc: serviceConfig{
-				publicThingsURI: publicThingsAPIURLMock(),
 			},
 			messageProducer: &msgProducer,
 		}

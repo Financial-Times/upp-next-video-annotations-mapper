@@ -9,8 +9,7 @@ import (
 const videoUUIDField = "id"
 const annotationsField = "annotations"
 const annotationIdField = "id"
-const annotationNameField = "name"
-const annotationPrimaryField = "primary"
+const annotationPredicateField = "predicate"
 const deletedField = "deleted"
 
 type videoMapper struct {
@@ -22,9 +21,7 @@ type videoMapper struct {
 
 type annotation struct {
 	thingID     string
-	thingText   string
-	primaryFlag bool
-	thing       *thingInfo
+	predicate   string
 }
 
 func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
@@ -53,9 +50,6 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		return nil, videoUUID, nil
 	}
 
-	thingHandler := thingHandler{vm.sc, vm.tid, videoUUID}
-	thingHandler.retrieveThingsDetails(annotations)
-
 	annHandler := annHandler{videoUUID, vm.tid}
 	conceptSuggestion := annHandler.createAnnotations(annotations)
 
@@ -73,28 +67,19 @@ func (vm *videoMapper) buildAnnotations(nextAnnsArray []map[string]interface{}, 
 	for _, ann := range nextAnnsArray {
 		thingID, err := getStringField(annotationIdField, ann, vm)
 		if err != nil {
-			logger.videoErrorEvent(vm.tid, videoUUID, err, "Annotation could not be processed")
+			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract concept id from annotation field")
 			continue
 		}
 
-		thingUUID, ok := parseThingUUID(thingID)
-		if !ok {
-			logger.videoEvent(vm.tid, videoUUID, fmt.Sprintf("Cannot extract thing UUID from annotation id field: %s", thingID))
-			continue
-		}
-
-		thingName, _ := getStringField(annotationNameField, ann, vm) // ignore the error as name field is not used
-		thingPrimaryFlag, err := getBoolField(annotationPrimaryField, ann, vm)
+		predicate, err := getStringField(annotationPredicateField, ann, vm)
 		if err != nil {
-			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract primary flag from annotation field")
+			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract predicate from annotation field")
 			continue
 		}
 
 		ann := annotation{
 			thingID:     thingID,
-			thingText:   thingName,
-			primaryFlag: thingPrimaryFlag,
-			thing:       &thingInfo{uuid: thingUUID},
+			predicate:   predicate,
 		}
 		annotations = append(annotations, ann)
 	}

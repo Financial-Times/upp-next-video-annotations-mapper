@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 const relevanceURI = "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
 const confidenceURI = "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
 
@@ -58,10 +56,7 @@ type annHandler struct {
 func (h annHandler) createAnnotations(nextAnns []annotation) *ConceptSuggestion {
 	var suggestions = make([]suggestion, 0)
 	for _, nextAnn := range nextAnns {
-		suggestionsForAnn, ok := h.createAnnotation(nextAnn)
-		if ok {
-			suggestions = append(suggestions, suggestionsForAnn...)
-		}
+		suggestions = append(suggestions, h.createAnnotation(nextAnn))
 	}
 
 	if len(suggestions) == 0 {
@@ -71,24 +66,12 @@ func (h annHandler) createAnnotations(nextAnns []annotation) *ConceptSuggestion 
 	return &ConceptSuggestion{h.videoUUID, suggestions}
 }
 
-func (h annHandler) createAnnotation(nextAnn annotation) ([]suggestion, bool) {
-	predicates := getPredicate(nextAnn.thing.directType, nextAnn.primaryFlag)
-	if len(predicates) == 0 {
-		logger.thingEvent(h.transactionID, nextAnn.thing.uuid, h.videoUUID,
-			fmt.Sprintf("No matched annotation predicate for type [%s] and primary flag [%t] combination", nextAnn.thing.directType, nextAnn.primaryFlag))
-		return nil, false
+func (h annHandler) createAnnotation(nextAnn annotation) suggestion {
+	thing := thing{
+		ID:        nextAnn.thingID,
+		Predicate: nextAnn.predicate,
+		Types:     []string{},
 	}
 
-	var suggestions = make([]suggestion, 0)
-	for _, predicate := range predicates {
-		thing := thing{
-			ID:        nextAnn.thingID,
-			PrefLabel: nextAnn.thing.prefLabel,
-			Predicate: predicate,
-			Types:     []string{nextAnn.thing.directType},
-		}
-		suggestions = append(suggestions, suggestion{Thing: thing, Provenance: provenances})
-	}
-
-	return suggestions, true
+	return suggestion{Thing: thing, Provenance: provenances}
 }

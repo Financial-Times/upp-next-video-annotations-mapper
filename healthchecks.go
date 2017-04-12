@@ -5,31 +5,83 @@ import (
 	"fmt"
 	fthealth "github.com/Financial-Times/go-fthealth/v1a"
 	"net/http"
+	"encoding/json"
+	"github.com/Financial-Times/message-queue-gonsumer/consumer"
+	"io/ioutil"
+	"github.com/Financial-Times/message-queue-go-producer/producer"
 )
 
-func (sc *serviceConfig) publicThingsAppCheck() fthealth.Check {
+type healthCheck struct {
+	client       http.Client
+	consumerConf consumer.QueueConfig
+	producerConf producer.MessageProducerConfig
+}
+
+func (h *healthCheck) check() fthealth.Check {
 	return fthealth.Check{
-		BusinessImpact:   "Videos cannot be published",
-		Name:             sc.publicThingsAppName + " Availabililty Check",
-		PanicGuide:       sc.publicThingsAppPanicGuide,
+		BusinessImpact:   "Annotations from published Next videos will not be created, clients will not see them within content.",
+		Name:             "MessageQueueProxyReachable",
+		PanicGuide:       "https://dewey.ft.com/up-nvam.html",
 		Severity:         1,
-		TechnicalSummary: "Checks that " + sc.publicThingsAppName + " Service is reachable. Next video annotations mapper requests content from " + sc.publicThingsAppName + " service.",
-		Checker: func() (string, error) {
-			return checkServiceAvailability(sc.publicThingsAppName, sc.publicThingsAppHealthURI)
-		},
+		TechnicalSummary: "Message queue proxy is not reachable/healthy",
+		Checker:          h.checkAggregateMessageQueueProxiesReachable,
 	}
 }
 
-func checkServiceAvailability(serviceName string, healthURI string) (string, error) {
-	req, err := http.NewRequest("GET", healthURI, nil)
-	resp, err := client.Do(req)
+func (h *healthCheck) checkAggregateMessageQueueProxiesReachable() (string, error) {
+	errMsg := ""
+
+	err := h.checkMessageQueueProxyReachable(h.producerConf.Addr, h.producerConf.Topic, h.producerConf.Authorization, h.producerConf.Queue)
 	if err != nil {
-		msg := fmt.Sprintf("%s service is unreachable: %v", serviceName, err)
-		return msg, errors.New(msg)
+		return err.Error(), fmt.Errorf("Health check for queue address %s, topic %s failed. Error: %s", h.producerConf.Addr, h.producerConf.Topic, err.Error())
 	}
+
+	for i := 0; i < len(h.consumerConf.Addrs); i++ {
+		err := h.checkMessageQueueProxyReachable(h.consumerConf.Addrs[i], h.consumerConf.Topic, h.consumerConf.AuthorizationKey, h.consumerConf.Queue)
+		if err == nil {
+			return "Ok", nil
+		}
+		errMsg = errMsg + fmt.Sprintf("Health check for queue address %s, topic %s failed. Error: %s", h.consumerConf.Addrs[i], h.consumerConf.Topic, err.Error())
+	}
+	return errMsg, errors.New(errMsg)
+}
+
+func (h *healthCheck) checkMessageQueueProxyReachable(address string, topic string, authKey string, queue string) error {
+	req, err := http.NewRequest("GET", address+"/topics", nil)
+	if err != nil {
+		logger.messageEvent(topic, fmt.Sprintf("Could not connect to proxy: %v", err.Error()))
+		return err
+	}
+	if len(authKey) > 0 {
+		req.Header.Add("Authorization", authKey)
+	}
+	if len(queue) > 0 {
+		req.Host = queue
+	}
+	resp, err := h.client.Do(req)
+	if err != nil {
+		logger.messageEvent(topic, fmt.Sprintf("Could not connect to proxy: %v", err.Error()))
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
-		msg := fmt.Sprintf("%s service is not responding with OK. status=%d", serviceName, resp.StatusCode)
-		return msg, errors.New(msg)
+		errMsg := fmt.Sprintf("Proxy returned status: %d", resp.StatusCode)
+		return errors.New(errMsg)
 	}
-	return "Ok", nil
+	body, err := ioutil.ReadAll(resp.Body)
+	return checkIfTopicIsPresent(body, topic)
+}
+
+func checkIfTopicIsPresent(body []byte, searchedTopic string) error {
+	var topics []string
+	err := json.Unmarshal(body, &topics)
+	if err != nil {
+		return fmt.Errorf("Error occured and topic could not be found. %v", err.Error())
+	}
+	for _, topic := range topics {
+		if topic == searchedTopic {
+			return nil
+		}
+	}
+	return errors.New("Topic was not found")
 }
