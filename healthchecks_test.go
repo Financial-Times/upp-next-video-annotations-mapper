@@ -131,7 +131,7 @@ func statusMissingTopicsHandler(w http.ResponseWriter, r *http.Request) {
 	writeTopics(w, "OtherTopic")
 }
 
-func writeTopics(w http.ResponseWriter, topics... string) {
+func writeTopics(w http.ResponseWriter, topics ...string) {
 	w.WriteHeader(http.StatusOK)
 	b, err := json.Marshal(topics)
 	if err != nil {
