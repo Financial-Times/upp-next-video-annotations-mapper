@@ -1,9 +1,7 @@
 package main
 
 import (
-	tid "github.com/Financial-Times/transactionid-utils-go"
 	"github.com/Sirupsen/logrus"
-	"net/http"
 )
 
 type queueEvent struct {
