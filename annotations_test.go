@@ -27,6 +27,10 @@ func TestAnnotationsCreation(t *testing.T) {
 				newSuggestion("id2", "about"),
 			),
 		},
+		{
+			[]annotation{},
+			ConceptSuggestion{videoUUID, []suggestion{}},
+		},
 	}
 
 	h := annHandler{videoUUID: videoUUID}
