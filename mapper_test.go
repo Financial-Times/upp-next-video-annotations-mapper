@@ -85,7 +85,7 @@ func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
 			assert.Fail(err.Error())
 		}
 		vm := videoMapper{
-			sc: serviceConfig{},
+			sc:           serviceConfig{},
 			unmarshalled: nextVideo,
 		}
 
