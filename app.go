@@ -26,7 +26,6 @@ var logger *appLogger
 type serviceConfig struct {
 	serviceName               string
 	appPort                   string
-	cacheControlPolicy        string
 	envAPIHost                string
 	graphiteTCPAddress        string
 	graphitePrefix            string
@@ -40,30 +39,6 @@ func main() {
 		Value:  "8084",
 		Desc:   "Default port for Next Video Annotations Mapper",
 		EnvVar: "APP_PORT",
-	})
-	cacheControlPolicy := app.String(cli.StringOpt{
-		Name:   "cache-control-policy",
-		Value:  "no-store",
-		Desc:   "Cache control policy header",
-		EnvVar: "CACHE_CONTROL_POLICY",
-	})
-	envAPIHost := app.String(cli.StringOpt{
-		Name:   "env-api-host",
-		Value:  "api.ft.com",
-		Desc:   "API host to use for URLs in responses",
-		EnvVar: "ENV_API_HOST",
-	})
-	graphiteTCPAddress := app.String(cli.StringOpt{
-		Name:   "graphite-tcp-address",
-		Value:  "",
-		Desc:   "Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you do NOT want to output to graphite (e.g. if running locally)",
-		EnvVar: "GRAPHITE_TCP_ADDRESS",
-	})
-	graphitePrefix := app.String(cli.StringOpt{
-		Name:   "graphite-prefix",
-		Value:  "coco.services.$ENV.content-preview.0",
-		Desc:   "Prefix to use. Should start with content, include the environment, and the host name. e.g. coco.pre-prod.sections-rw-neo4j.1",
-		EnvVar: "GRAPHITE_PREFIX",
 	})
 	addresses := app.Strings(cli.StringsOpt{
 		Name:   "queue-addresses",
@@ -111,10 +86,6 @@ func main() {
 		sc := serviceConfig{
 			serviceName:               *serviceName,
 			appPort:                   *appPort,
-			cacheControlPolicy:        *cacheControlPolicy,
-			graphiteTCPAddress:        *graphiteTCPAddress,
-			graphitePrefix:            *graphitePrefix,
-			envAPIHost:                *envAPIHost,
 		}
 		consumerConfig := consumer.QueueConfig{
 			Addrs:                *addresses,
@@ -180,9 +151,6 @@ func (sc serviceConfig) asMap() map[string]interface{} {
 	return map[string]interface{}{
 		"service-name":                 sc.serviceName,
 		"service-port":                 sc.appPort,
-		"cache-control-policy":         sc.cacheControlPolicy,
-		"env-api-host":                 sc.envAPIHost,
-		"graphite-tcp-address":         sc.graphiteTCPAddress,
 		"graphite-prefix":              sc.graphitePrefix,
 	}
 }
