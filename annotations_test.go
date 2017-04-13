@@ -32,7 +32,7 @@ func TestAnnotationsCreation(t *testing.T) {
 	h := annHandler{videoUUID: videoUUID}
 	for _, test := range tests {
 		actualConceptSuggestion := h.createAnnotations(test.anns)
-		assert.Equal(test.expectedCs, *actualConceptSuggestion, "Wrong conceptSuggestion. Input anns: [%v]", test.anns)
+		assert.Equal(test.expectedCs, actualConceptSuggestion, "Wrong conceptSuggestion. Input anns: [%v]", test.anns)
 	}
 }
 

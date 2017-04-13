@@ -53,7 +53,7 @@ type annHandler struct {
 	transactionID string
 }
 
-func (h annHandler) createAnnotations(nextAnns []annotation) *ConceptSuggestion {
+func (h annHandler) createAnnotations(nextAnns []annotation) ConceptSuggestion {
 	var suggestions = make([]suggestion, 0)
 	for _, nextAnn := range nextAnns {
 		suggestions = append(suggestions, h.createAnnotation(nextAnn))
@@ -63,7 +63,7 @@ func (h annHandler) createAnnotations(nextAnns []annotation) *ConceptSuggestion 
 		logger.videoEvent(h.transactionID, h.videoUUID, "No annotation could be mapped for the video")
 	}
 
-	return &ConceptSuggestion{h.videoUUID, suggestions}
+	return ConceptSuggestion{UUID: h.videoUUID, Suggestions: suggestions}
 }
 
 func (h annHandler) createAnnotation(nextAnn annotation) suggestion {

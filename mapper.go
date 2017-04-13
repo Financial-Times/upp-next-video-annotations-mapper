@@ -20,18 +20,18 @@ type videoMapper struct {
 }
 
 type annotation struct {
-	thingID     string
-	predicate   string
+	thingID   string
+	predicate string
 }
 
 func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
-	videoUUID, err := getStringField(videoUUIDField, vm.unmarshalled, vm)
+	videoUUID, err := getRequiredStringField(videoUUIDField, vm.unmarshalled)
 	if err != nil {
 		return nil, "", err
 	}
 
 	if vm.isDeleteEvent() {
-		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprintf("Ignoring delete Next video message. [%s]", vm.strContent))
+		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprint("Ignoring delete Next video message."))
 		return nil, videoUUID, nil
 	}
 
@@ -50,10 +50,10 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		return nil, videoUUID, nil
 	}
 
-	annHandler := annHandler{videoUUID, vm.tid}
+	annHandler := annHandler{videoUUID: videoUUID, transactionID: vm.tid}
 	conceptSuggestion := annHandler.createAnnotations(annotations)
 
-	marshalledPubEvent, err := json.Marshal(*conceptSuggestion)
+	marshalledPubEvent, err := json.Marshal(conceptSuggestion)
 	if err != nil {
 		logger.videoEvent(vm.tid, videoUUID, "Error marshalling processed annotations")
 		return nil, videoUUID, err
@@ -65,31 +65,31 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 func (vm *videoMapper) buildAnnotations(nextAnnsArray []map[string]interface{}, videoUUID string) []annotation {
 	var annotations = make([]annotation, 0)
 	for _, ann := range nextAnnsArray {
-		thingID, err := getStringField(annotationIdField, ann, vm)
+		thingID, err := getRequiredStringField(annotationIdField, ann)
 		if err != nil {
 			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract concept id from annotation field")
 			continue
 		}
 
-		predicate, err := getStringField(annotationPredicateField, ann, vm)
+		predicate, err := getRequiredStringField(annotationPredicateField, ann)
 		if err != nil {
 			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract predicate from annotation field")
 			continue
 		}
 
 		ann := annotation{
-			thingID:     thingID,
-			predicate:   predicate,
+			thingID:   thingID,
+			predicate: predicate,
 		}
 		annotations = append(annotations, ann)
 	}
 	return annotations
 }
 
-func getStringField(key string, obj map[string]interface{}, vm *videoMapper) (string, error) {
+func getRequiredStringField(key string, obj map[string]interface{}) (string, error) {
 	valueI, ok := obj[key]
-	if !ok {
-		return "", nullFieldError(key, vm)
+	if !ok || valueI == nil {
+		return "", nullFieldError(key)
 	}
 
 	val, ok := valueI.(string)
@@ -103,7 +103,7 @@ func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID stri
 	var objArrayI interface{}
 	objArrayI, ok := obj[key]
 	if !ok {
-		logger.videoMapEvent(vm.tid, videoUUID, nullFieldError(key, vm).Error())
+		logger.videoMapEvent(vm.tid, videoUUID, nullFieldError(key).Error())
 		return nil, nil
 	}
 
@@ -124,10 +124,10 @@ func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID stri
 	return result, nil
 }
 
-func getBoolField(key string, obj map[string]interface{}, vm *videoMapper) (bool, error) {
+func getBoolField(key string, obj map[string]interface{}) (bool, error) {
 	valueI, ok := obj[key]
 	if !ok {
-		return false, nullFieldError(key, vm)
+		return false, nullFieldError(key)
 	}
 
 	val, ok := valueI.(bool)
@@ -146,8 +146,8 @@ func parseThingUUID(thingID string) (string, bool) {
 	return "", false
 }
 
-func nullFieldError(fieldKey string, vm *videoMapper) error {
-	return fmt.Errorf("[%s] field of native Next video JSON is missing: [%s]", fieldKey, vm.strContent)
+func nullFieldError(fieldKey string) error {
+	return fmt.Errorf("[%s] field of native Next video JSON is missing or is null", fieldKey)
 }
 
 func wrongFieldTypeError(expectedType, fieldKey string, value interface{}) error {

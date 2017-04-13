@@ -151,7 +151,6 @@ func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
 
 func TestGetStringField(t *testing.T) {
 	assert := assert.New(t)
-	vm := videoMapper{}
 	tests := []struct {
 		key           string
 		expectedValue string
@@ -175,7 +174,7 @@ func TestGetStringField(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := getStringField(test.key, testMap, &vm)
+		result, err := getRequiredStringField(test.key, testMap)
 		assert.Equal(test.expectedValue, result, "Value is wrong. Map key: %s", test.key)
 		assert.Equal(test.expectedIsErr, err != nil, "Error status is wrong. Map key: %s", test.key)
 	}
@@ -183,7 +182,6 @@ func TestGetStringField(t *testing.T) {
 
 func TestGetBoolField(t *testing.T) {
 	assert := assert.New(t)
-	vm := videoMapper{}
 	tests := []struct {
 		key           string
 		expectedValue bool
@@ -207,7 +205,7 @@ func TestGetBoolField(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := getBoolField(test.key, testMap, &vm)
+		result, err := getBoolField(test.key, testMap)
 		assert.Equal(test.expectedValue, result, "Value is wrong. Map key: %s", test.key)
 		assert.Equal(test.expectedIsErr, err != nil, "Error status is wrong. Map key: %s", test.key)
 	}

@@ -1,27 +1,28 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	fthealth "github.com/Financial-Times/go-fthealth/v1a"
-	"net/http"
-	"encoding/json"
+	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"io/ioutil"
-	"github.com/Financial-Times/message-queue-go-producer/producer"
+	"net/http"
 )
 
 type healthCheck struct {
 	client       http.Client
 	consumerConf consumer.QueueConfig
 	producerConf producer.MessageProducerConfig
+	panicGuide   string
 }
 
 func (h *healthCheck) check() fthealth.Check {
 	return fthealth.Check{
 		BusinessImpact:   "Annotations from published Next videos will not be created, clients will not see them within content.",
 		Name:             "MessageQueueProxyReachable",
-		PanicGuide:       "https://dewey.ft.com/up-nvam.html",
+		PanicGuide:       h.panicGuide,
 		Severity:         1,
 		TechnicalSummary: "Message queue proxy is not reachable/healthy",
 		Checker:          h.checkAggregateMessageQueueProxiesReachable,

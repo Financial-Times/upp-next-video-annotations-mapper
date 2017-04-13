@@ -14,21 +14,15 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 )
 
 const serviceDescription = "A RESTful API for mapping Next video editor annotations to UPP annotations"
 
-var timeout = 10 * time.Second
-var client = &http.Client{Timeout: timeout}
 var logger *appLogger
 
 type serviceConfig struct {
-	serviceName               string
-	appPort                   string
-	envAPIHost                string
-	graphiteTCPAddress        string
-	graphitePrefix            string
+	serviceName string
+	appPort     string
 }
 
 func main() {
@@ -39,6 +33,12 @@ func main() {
 		Value:  "8084",
 		Desc:   "Default port for Next Video Annotations Mapper",
 		EnvVar: "APP_PORT",
+	})
+	panicGuide := app.String(cli.StringOpt{
+		Name:   "panic-guide",
+		Value:  "https://dewey.ft.com/up-nvam.html",
+		Desc:   "Path to panic guide",
+		EnvVar: "PANIC_GUIDE",
 	})
 	addresses := app.Strings(cli.StringsOpt{
 		Name:   "queue-addresses",
@@ -84,8 +84,8 @@ func main() {
 			cli.Exit(1)
 		}
 		sc := serviceConfig{
-			serviceName:               *serviceName,
-			appPort:                   *appPort,
+			serviceName: *serviceName,
+			appPort:     *appPort,
 		}
 		consumerConfig := consumer.QueueConfig{
 			Addrs:                *addresses,
@@ -104,9 +104,9 @@ func main() {
 		annMapper := queueHandler{sc: sc, consumerConfig: consumerConfig, producerConfig: producerConfig}
 		annMapper.init()
 
-		h := serviceHandler{sc}
-		hc := healthCheck{client: http.Client{}, consumerConf: consumerConfig, producerConf: producerConfig}
-		go listen(sc, h, hc)
+		sh := serviceHandler{sc}
+		hc := healthCheck{client: http.Client{}, consumerConf: consumerConfig, producerConf: producerConfig, panicGuide: *panicGuide}
+		go listen(sc, sh, hc)
 
 		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
 	}
@@ -116,9 +116,9 @@ func main() {
 	}
 }
 
-func listen(sc serviceConfig, h serviceHandler, hc healthCheck) {
+func listen(sc serviceConfig, sh serviceHandler, hc healthCheck) {
 	r := mux.NewRouter()
-	r.Path("/map").Handler(handlers.MethodHandler{"POST": http.HandlerFunc(h.mapRequest)})
+	r.Path("/map").Handler(handlers.MethodHandler{"POST": http.HandlerFunc(sh.mapRequest)})
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(sc.serviceName, serviceDescription, hc.check()))})
@@ -149,8 +149,7 @@ func consumeUntilSigterm(messageConsumer *consumer.MessageConsumer, config consu
 
 func (sc serviceConfig) asMap() map[string]interface{} {
 	return map[string]interface{}{
-		"service-name":                 sc.serviceName,
-		"service-port":                 sc.appPort,
-		"graphite-prefix":              sc.graphitePrefix,
+		"service-name": sc.serviceName,
+		"service-port": sc.appPort,
 	}
 }
