@@ -31,17 +31,12 @@ Locally with properties set:
 go install
 $GOPATH/bin/upp-next-video-annotations-mapper \
 --app_port "8080" \
---public_things_uri "http://localhost:8080/__public-things-api/things/" \
---public_things_app_name "public-things-api" \
---public_things_app_health_uri "http://localhost:8080/__public-things-api/__health" \
 --q_addr "http://localhost:8080" \
 --q_group "videoAnnotationsMapper" \
 --q_read_topic "NativeCmsPublicationEvents" \
 --q_read_queue "kafka" \
 --q_write_topic "V1ConceptAnnotations" \
 --q_write_queue "kafka" \
---graphite_tcp_address "graphite.ft.com:2003" \
---graphite_prefix "coco.services.$ENV.next-video-annotations-mapper.%i" \
 ```
 
 With Docker:
@@ -53,17 +48,12 @@ With Docker:
 ```
 docker run -ti
 --env "APP_PORT=8080" \
---env "PUBLIC_THINGS_URI=http://localhost:8080/__public-things-api/things/" \
---env "PUBLIC_THINGS_APP_NAME=public-things-api" \
---env "PUBLIC_THINGS_APP_HEALTH_URI=http://localhost:8080/__public-things-api/__health" \
 --env "Q_ADDR=http://localhost:8080" \
 --env "Q_GROUP=videoAnnotationsMapper" \
 --env "Q_READ_TOPIC=NativeCmsPublicationEvents" \
 --env "Q_READ_QUEUE=kafka" \
 --env "Q_WRITE_TOPIC=V1ConceptAnnotations" \
 --env "Q_WRITE_QUEUE=kafka" \
---env "GRAPHITE_TCP_ADDRESS=graphite.ft.com:2003" \
---env "GRAPHITE_PREFIX=coco.services.$ENV.next-video-annotations-mapper.%i" \
 coco/upp-next-video-annotations-mapper
 ```
 
@@ -128,28 +118,15 @@ body.json:
 	}],
 	"annotations": [{
 		"id": "http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740",
-		"name": "Markets (section)",
-		"primary": false
+		"predicate": "http://www.ft.com/ontology/classification/isClassifiedBy",
 	},
 	{
 		"id": "http://api.ft.com/things/b43f1a91-b805-3453-8c36-1d164c047ca2",
-		"name": "Investing under Trump (topic)",
-		"primary": false
-	},
-	{
-		"id": "http://api.ft.com/things/c2acc00f-5ad6-3f79-b6bb-d51dcd81508a",
-		"name": "Gold (topic)",
-		"primary": false
+		"predicate": "http://www.ft.com/ontology/annotation/majorMentions",
 	},
 	{
 		"id": "http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325",
-		"name": "Financials (section)",
-		"primary": false
-	},
-	{
-		"id": "http://api.ft.com/things/a54fda40-7fe7-339a-9b83-2d7b964ff3a4",
-		"name": "Market Minute (brand)",
-		"primary": true
+		"predicate": "http://www.ft.com/ontology/classification/isClassifiedBy",
 	}],
 	"encodings": [{
 		"mioId": 762380,
@@ -257,30 +234,6 @@ Body:
     },
     {
       "thing": {
-        "id": "http://api.ft.com/things/c2acc00f-5ad6-3f79-b6bb-d51dcd81508a",
-        "prefLabel": "Gold",
-        "predicate": "majorMentions",
-        "types": [
-          "http://www.ft.com/ontology/Topic"
-        ]
-      },
-      "provenances": [
-        {
-          "scores": [
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM",
-              "value": 0.9
-            },
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM",
-              "value": 0.9
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "thing": {
         "id": "http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325",
         "prefLabel": "Financials",
         "predicate": "isClassifiedBy",
@@ -303,54 +256,6 @@ Body:
         }
       ]
     },
-    {
-      "thing": {
-        "id": "http://api.ft.com/things/a54fda40-7fe7-339a-9b83-2d7b964ff3a4",
-        "prefLabel": "Market Minute",
-        "predicate": "isPrimarilyClassifiedBy",
-        "types": [
-          "http://www.ft.com/ontology/product/Brand"
-        ]
-      },
-      "provenances": [
-        {
-          "scores": [
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM",
-              "value": 0.9
-            },
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM",
-              "value": 0.9
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "thing": {
-        "id": "http://api.ft.com/things/a54fda40-7fe7-339a-9b83-2d7b964ff3a4",
-        "prefLabel": "Market Minute",
-        "predicate": "isClassifiedBy",
-        "types": [
-          "http://www.ft.com/ontology/product/Brand"
-        ]
-      },
-      "provenances": [
-        {
-          "scores": [
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM",
-              "value": 0.9
-            },
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM",
-              "value": 0.9
-            }
-          ]
-        }
-      ]
-    }
   ]
 }
 ```
