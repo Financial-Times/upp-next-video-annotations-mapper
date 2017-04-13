@@ -187,11 +187,9 @@ Body:
     {
       "thing": {
         "id": "http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740",
-        "prefLabel": "Markets",
+        "prefLabel": "",
         "predicate": "isClassifiedBy",
-        "types": [
-          "http://www.ft.com/ontology/Section"
-        ]
+        "types": []
       },
       "provenances": [
         {
@@ -211,11 +209,9 @@ Body:
     {
       "thing": {
         "id": "http://api.ft.com/things/b43f1a91-b805-3453-8c36-1d164c047ca2",
-        "prefLabel": "Investing under Trump",
+        "prefLabel": "",
         "predicate": "majorMentions",
-        "types": [
-          "http://www.ft.com/ontology/Topic"
-        ]
+        "types": []
       },
       "provenances": [
         {
@@ -235,11 +231,9 @@ Body:
     {
       "thing": {
         "id": "http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325",
-        "prefLabel": "Financials",
+        "prefLabel": "",
         "predicate": "isClassifiedBy",
-        "types": [
-          "http://www.ft.com/ontology/Section"
-        ]
+        "types": []
       },
       "provenances": [
         {
