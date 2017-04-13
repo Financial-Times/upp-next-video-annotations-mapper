@@ -70,9 +70,15 @@ func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{
 			continue
 		}
 
-		predicate, err := getRequiredStringField(annotationPredicateField, ann)
+		nextAnnPredicate, err := getRequiredStringField(annotationPredicateField, ann)
 		if err != nil {
 			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract predicate from annotation field")
+			continue
+		}
+
+		predicate, ok := getPredicateShortForm(nextAnnPredicate)
+		if !ok {
+			logger.videoErrorEvent(vm.tid, videoUUID, err, fmt.Sprint("Next video predicate id is not known:", nextAnnPredicate))
 			continue
 		}
 

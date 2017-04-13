@@ -34,8 +34,9 @@ func TestBuildAnnotations(t *testing.T) {
 	}{
 		{
 			[]map[string]interface{}{
-				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"),
-				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "mentions"),
+				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "http://www.ft.com/ontology/classification/isClassifiedBy"),
+				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "unknown_predicate_id"),
+				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "http://www.ft.com/ontology/annotation/mentions"),
 			},
 			[]annotation{
 				{"http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"},
@@ -44,7 +45,7 @@ func TestBuildAnnotations(t *testing.T) {
 		},
 		{
 			[]map[string]interface{}{
-				newNextAnnotation(nil, "mentions"),
+				newNextAnnotation(nil, "http://www.ft.com/ontology/annotation/mentions"),
 			},
 			[]annotation{},
 		},
