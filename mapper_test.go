@@ -12,6 +12,7 @@ var testMap = make(map[string]interface{})
 func init() {
 	logger = newAppLogger("test")
 	testMap["string"] = "value1"
+	testMap["nullstring"] = nil
 	testMap["bool"] = true
 
 	var objArray = make([]interface{}, 0)
@@ -34,9 +35,11 @@ func TestBuildAnnotations(t *testing.T) {
 		{
 			[]map[string]interface{}{
 				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"),
+				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "mentions"),
 			},
 			[]annotation{
-				newAnnWithoutThingDetail("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"),
+				{"http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"},
+				{"http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "mentions"},
 			},
 		},
 		{
@@ -45,10 +48,16 @@ func TestBuildAnnotations(t *testing.T) {
 			},
 			[]annotation{},
 		},
+		{
+			[]map[string]interface{}{
+				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", nil),
+			},
+			[]annotation{},
+		},
 	}
 	for _, test := range tests {
-		Anns := vm.buildAnnotations(test.nextAnns, "")
-		assert.Equal(test.expectedAnns, Anns, "Annotations are wrong. Test input: [%v]", test.nextAnns)
+		anns := vm.retrieveAnnotations(test.nextAnns, "")
+		assert.Equal(test.expectedAnns, anns, "Annotations are wrong. Test input: [%v]", test.nextAnns)
 	}
 }
 
@@ -149,17 +158,22 @@ func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
 	}
 }
 
-func TestGetStringField(t *testing.T) {
+func TestGetRequiredStringField(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
 		key           string
-		expectedValue string
+		expectedValue interface{}
 		expectedIsErr bool
 	}{
 		{
 			"string",
 			"value1",
 			false,
+		},
+		{
+			"nullstring",
+			"",
+			true,
 		},
 		{
 			"bool",
@@ -253,37 +267,6 @@ func TestGetObjectsArrayField(t *testing.T) {
 	}
 }
 
-func TestParseThingUUID(t *testing.T) {
-	assert := assert.New(t)
-	tests := []struct {
-		id             string
-		expectedUUID   string
-		expectedStatus bool
-	}{
-		{
-			"http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740",
-			"d969d76e-f8f4-34ae-bc38-95cfd0884740",
-			true,
-		},
-		{
-			"d969d76e-f8f4-34ae-bc38-95cfd0884740",
-			"d969d76e-f8f4-34ae-bc38-95cfd0884740",
-			true,
-		},
-		{
-			"http://api.ft.com/things/",
-			"",
-			false,
-		},
-	}
-
-	for _, test := range tests {
-		result, status := parseThingUUID(test.id)
-		assert.Equal(test.expectedUUID, result, "Parsed value is wrong. Input id: %s", test.id)
-		assert.Equal(test.expectedStatus, status, "Error status is wrong. Input id: %s", test.id)
-	}
-}
-
 func newNextAnnotation(id interface{}, predicate interface{}) map[string]interface{} {
 	var obj = make(map[string]interface{})
 	if id != nil {
@@ -293,13 +276,6 @@ func newNextAnnotation(id interface{}, predicate interface{}) map[string]interfa
 		obj[annotationPredicateField] = predicate
 	}
 	return obj
-}
-
-func newAnnWithoutThingDetail(id string, predicate string) annotation {
-	return annotation{
-		thingID:     id,
-		predicate:   predicate,
-	}
 }
 
 func readContent(fileName string) (map[string]interface{}, error) {

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 const videoUUIDField = "id"
@@ -43,7 +42,7 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		return nil, videoUUID, nil
 	}
 
-	annotations := vm.buildAnnotations(nextAnnsArray, videoUUID)
+	annotations := vm.retrieveAnnotations(nextAnnsArray, videoUUID)
 
 	if len(annotations) == 0 {
 		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprintf("No annotation could be retrieved for Next video: [%s]", vm.strContent))
@@ -62,7 +61,7 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	return marshalledPubEvent, videoUUID, nil
 }
 
-func (vm *videoMapper) buildAnnotations(nextAnnsArray []map[string]interface{}, videoUUID string) []annotation {
+func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{}, videoUUID string) []annotation {
 	var annotations = make([]annotation, 0)
 	for _, ann := range nextAnnsArray {
 		thingID, err := getRequiredStringField(annotationIdField, ann)
@@ -135,15 +134,6 @@ func getBoolField(key string, obj map[string]interface{}) (bool, error) {
 		return false, wrongFieldTypeError("bool", key, valueI)
 	}
 	return val, nil
-}
-
-func parseThingUUID(thingID string) (string, bool) {
-	uuidIdx := strings.LastIndex(thingID, "/") + 1
-	uuid := thingID[uuidIdx:]
-	if uuid != "" {
-		return uuid, true
-	}
-	return "", false
 }
 
 func nullFieldError(fieldKey string) error {
