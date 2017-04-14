@@ -13,13 +13,9 @@ import (
 )
 
 const (
-	_            = iota
 	statusOK int = 1 + iota
 	statusNA
 	statusMissingTopics
-)
-
-const (
 	consumerTopic = "NativeCmsPublicationEvents"
 	producerTopic = "V1ConceptAnnotations"
 )
