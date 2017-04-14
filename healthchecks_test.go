@@ -19,8 +19,10 @@ const (
 	statusMissingTopics
 )
 
-const consumerTopic = "NativeCmsPublicationEvents"
-const producerTopic = "V1ConceptAnnotations"
+const (
+	consumerTopic = "NativeCmsPublicationEvents"
+	producerTopic = "V1ConceptAnnotations"
+)
 
 var queueServerMock *httptest.Server
 
@@ -31,7 +33,7 @@ func TestCheckMessageQueueAvailability(t *testing.T) {
 	defer queueServerMock.Close()
 
 	h := healthCheck{
-		client:       http.Client{},
+		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
 	}
@@ -48,7 +50,7 @@ func TestCheckMessageQueueNonAvailability(t *testing.T) {
 	defer queueServerMock.Close()
 
 	h := healthCheck{
-		client:       http.Client{},
+		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
 	}
@@ -64,7 +66,7 @@ func TestCheckMessageQueueMissingTopic(t *testing.T) {
 	defer queueServerMock.Close()
 
 	h := healthCheck{
-		client:       http.Client{},
+		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
 	}
@@ -95,7 +97,7 @@ func TestCheckMessageQueueWrongQueueURL(t *testing.T) {
 
 	for _, test := range tests {
 		h := healthCheck{
-			client:       http.Client{},
+			httpCl:       &http.Client{},
 			consumerConf: test.consumerConfig,
 			producerConf: test.producerConfig,
 		}
@@ -137,7 +139,10 @@ func writeTopics(w http.ResponseWriter, topics ...string) {
 	if err != nil {
 		panic("Unexpected error during response topics write")
 	}
-	w.Write(b)
+	_, err = w.Write(b)
+	if err != nil {
+		panic("Unexpected error during response topics write")
+	}
 }
 
 func internalErrorHandler(w http.ResponseWriter, r *http.Request) {

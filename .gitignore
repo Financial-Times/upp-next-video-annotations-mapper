@@ -1,7 +1,7 @@
-upp-next-video-annotations-mapper.exe
 *.log
 *.html
 *coverage.*
 *.iml
 .idea/
-upp-next-video-annotations-mapper
+upp-next-video-annotations-mapper*
+vendor/*/

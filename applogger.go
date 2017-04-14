@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/Sirupsen/logrus"
-)
+import "github.com/Sirupsen/logrus"
 
 type queueEvent struct {
 	serviceName   string

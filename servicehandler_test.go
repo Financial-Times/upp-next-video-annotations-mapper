@@ -15,15 +15,14 @@ func init() {
 
 func TestMapRequest(t *testing.T) {
 	h := serviceHandler{
-		sc: serviceConfig{
-		},
+		sc: serviceConfig{},
 	}
 
 	assert := assert.New(t)
 	tests := []struct {
 		fileName           string
 		expectedContent    string
-		expectedHttpStatus int
+		expectedHTTPStatus int
 	}{
 		{
 			"next-video-input.json",
@@ -56,10 +55,10 @@ func TestMapRequest(t *testing.T) {
 		switch {
 		case err != nil:
 			assert.Fail(err.Error())
-		case test.expectedHttpStatus != http.StatusOK:
-			assert.Equal(test.expectedHttpStatus, http.StatusBadRequest, "HTTP status wrong. Input JSON: %s", test.fileName)
+		case test.expectedHTTPStatus != http.StatusOK:
+			assert.Equal(test.expectedHTTPStatus, http.StatusBadRequest, "HTTP status wrong. Input JSON: %s", test.fileName)
 		default:
-			assert.Equal(test.expectedHttpStatus, http.StatusOK, "HTTP status wrong. Input JSON: %s", test.fileName)
+			assert.Equal(test.expectedHTTPStatus, http.StatusOK, "HTTP status wrong. Input JSON: %s", test.fileName)
 			assert.Equal(test.expectedContent, string(body), "Marshalled content wrong. Input JSON: %s", test.fileName)
 		}
 	}

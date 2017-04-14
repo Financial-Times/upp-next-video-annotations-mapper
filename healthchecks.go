@@ -12,7 +12,7 @@ import (
 )
 
 type healthCheck struct {
-	client       http.Client
+	httpCl       *http.Client
 	consumerConf consumer.QueueConfig
 	producerConf producer.MessageProducerConfig
 	panicGuide   string
@@ -30,7 +30,7 @@ func (h *healthCheck) check() fthealth.Check {
 }
 
 func (h *healthCheck) checkAggregateMessageQueueProxiesReachable() (string, error) {
-	errMsg := ""
+	var errMsg string
 
 	err := h.checkMessageQueueProxyReachable(h.producerConf.Addr, h.producerConf.Topic, h.producerConf.Authorization, h.producerConf.Queue)
 	if err != nil {
@@ -59,7 +59,7 @@ func (h *healthCheck) checkMessageQueueProxyReachable(address string, topic stri
 	if len(queue) > 0 {
 		req.Host = queue
 	}
-	resp, err := h.client.Do(req)
+	resp, err := h.httpCl.Do(req)
 	if err != nil {
 		logger.messageEvent(topic, fmt.Sprintf("Could not connect to proxy: %v", err.Error()))
 		return err
@@ -70,6 +70,11 @@ func (h *healthCheck) checkMessageQueueProxyReachable(address string, topic stri
 		return errors.New(errMsg)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.messageEvent(topic, fmt.Sprintf("Could not read queue response: %v", err.Error()))
+		return err
+	}
+
 	return checkIfTopicIsPresent(body, topic)
 }
 

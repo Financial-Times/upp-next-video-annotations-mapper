@@ -1,10 +1,11 @@
 package main
 
-const relevanceURI = "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
-const confidenceURI = "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
-
-const defaultConfidenceScore = 0.9
-const defaultRelevanceScore = 0.9
+const (
+	relevanceURI           = "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
+	confidenceURI          = "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
+	defaultConfidenceScore = 0.9
+	defaultRelevanceScore  = 0.9
+)
 
 // ConceptSuggestion models the suggestion as it will be written on the queue
 type ConceptSuggestion struct {
@@ -48,30 +49,30 @@ var provenances = []provenance{
 	},
 }
 
-type annHandler struct {
+type annsContext struct {
 	videoUUID     string
 	transactionID string
 }
 
-func (h annHandler) createAnnotations(nextAnns []annotation) ConceptSuggestion {
-	var suggestions = make([]suggestion, 0)
+func createAnnotations(nextAnns []annotation, context annsContext) ConceptSuggestion {
+	var suggestions []suggestion
 	for _, nextAnn := range nextAnns {
-		suggestions = append(suggestions, h.createAnnotation(nextAnn))
+		suggestions = append(suggestions, newAnnotation(nextAnn))
 	}
 
 	if len(suggestions) == 0 {
-		logger.videoEvent(h.transactionID, h.videoUUID, "No annotation could be mapped for the video")
+		logger.videoEvent(context.transactionID, context.videoUUID, "No annotation could be mapped for the video")
 	}
 
-	return ConceptSuggestion{UUID: h.videoUUID, Suggestions: suggestions}
+	return ConceptSuggestion{UUID: context.videoUUID, Suggestions: suggestions}
 }
 
-func (h annHandler) createAnnotation(nextAnn annotation) suggestion {
-	thing := thing{
+func newAnnotation(nextAnn annotation) suggestion {
+	t := thing{
 		ID:        nextAnn.thingID,
 		Predicate: nextAnn.predicate,
 		Types:     []string{},
 	}
 
-	return suggestion{Thing: thing, Provenance: provenances}
+	return suggestion{Thing: t, Provenance: provenances}
 }

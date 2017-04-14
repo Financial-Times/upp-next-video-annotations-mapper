@@ -18,7 +18,7 @@ RUN apk --no-cache --virtual .build-dependencies add git go libc-dev ca-certific
   && mv * $GOPATH/src/${REPO_PATH} \
   && cd $GOPATH/src/${REPO_PATH} \
   && go get -t ./... \
-  && go test ./... \
+  && go test -race ./... \
   && go build -ldflags="${LDFLAGS}" \
   && mv upp-next-video-annotations-mapper /upp-next-video-annotations-mapper-app \
   && apk del .build-dependencies \

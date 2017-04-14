@@ -74,12 +74,10 @@ func TestQueueConsume(t *testing.T) {
 
 	for _, test := range tests {
 		mockMsgProducer := mockMessageProducer{}
-		var msgProducer producer.MessageProducer
-		msgProducer = &mockMsgProducer
+		var msgProducer = &mockMsgProducer
 		h := queueHandler{
-			sc: serviceConfig{
-			},
-			messageProducer: &msgProducer,
+			sc:              serviceConfig{},
+			messageProducer: msgProducer,
 		}
 
 		msg := consumer.Message{
@@ -95,10 +93,10 @@ func TestQueueConsume(t *testing.T) {
 	}
 }
 
-func createHeaders(originSystem string, requestId string) map[string]string {
+func createHeaders(originSystem string, requestID string) map[string]string {
 	var result = make(map[string]string)
 	result["Origin-System-Id"] = originSystem
-	result["X-Request-Id"] = requestId
+	result["X-Request-Id"] = requestID
 	return result
 }
 

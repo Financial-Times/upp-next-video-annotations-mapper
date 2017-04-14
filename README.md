@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/Financial-Times/upp-next-video-annotations-mapper.svg?style=svg)](https://circleci.com/gh/Financial-Times/upp-next-video-annotations-mapper) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/upp-next-video-annotations-mapper/badge.svg)](https://coveralls.io/github/Financial-Times/upp-next-video-annotations-mapper)
+[![CircleCI](https://circleci.com/gh/Financial-Times/upp-next-video-annotations-mapper.svg?style=svg)](https://circleci.com/gh/Financial-Times/upp-next-video-annotations-mapper) [![Go Report Card](https://goreportcard.com/badge/github.com/Financial-Times/upp-next-video-annotations-mapper)](https://goreportcard.com/report/github.com/Financial-Times/upp-next-video-annotations-mapper) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/upp-next-video-annotations-mapper/badge.svg)](https://coveralls.io/github/Financial-Times/upp-next-video-annotations-mapper)
 
 # Next Video Annotations Mapper (next-video-annotations-mapper)
 
@@ -8,13 +8,15 @@ used for transformation, resulting content being put back to Kafka(-bridge) on V
 
 ## Installation
 
-For the first time:
+In order to install, execute the following steps:
 
-`go get github.com/Financial-Times/upp-next-video-annotations-mapper`
-
-or update:
-
-`go get -u github.com/Financial-Times/upp-next-video-annotations-mapper`
+`
+go get -u github.com/kardianos/govendor
+go get -u github.com/Financial-Times/upp-next-video-annotations-mapper
+cd $GOPATH/src/github.com/Financial-Times/upp-next-video-annotations-mapper
+govendor sync
+go build .
+`
 
 ## Running
 

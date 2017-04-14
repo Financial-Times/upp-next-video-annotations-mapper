@@ -11,25 +11,25 @@ import (
 	"time"
 )
 
-const nextVideoOrigin = "http://cmdb.ft.com/systems/next-video-editor"
-const dateFormat = "2006-01-02T03:04:05.000Z0700"
-const generatedMsgType = "concept-suggestions"
+const (
+	nextVideoOrigin  = "http://cmdb.ft.com/systems/next-video-editor"
+	dateFormat       = "2006-01-02T03:04:05.000Z0700"
+	generatedMsgType = "concept-suggestions"
+)
 
 type queueHandler struct {
 	sc              serviceConfig
+	httpCl          *http.Client
 	consumerConfig  consumer.QueueConfig
 	producerConfig  producer.MessageProducerConfig
-	messageConsumer *consumer.MessageConsumer
-	messageProducer *producer.MessageProducer
+	messageConsumer consumer.MessageConsumer
+	messageProducer producer.MessageProducer
 }
 
 func (h *queueHandler) init() {
-	messageProducer := producer.NewMessageProducer(h.producerConfig)
-	h.messageProducer = &messageProducer
+	h.messageProducer = producer.NewMessageProducer(h.producerConfig)
 
-	httpCl := http.Client{}
-	messageConsumer := consumer.NewConsumer(h.consumerConfig, h.queueConsume, &httpCl)
-	h.messageConsumer = &messageConsumer
+	h.messageConsumer = consumer.NewConsumer(h.consumerConfig, h.queueConsume, h.httpCl)
 }
 
 func (h *queueHandler) queueConsume(m consumer.Message) {
@@ -51,7 +51,7 @@ func (h *queueHandler) queueConsume(m consumer.Message) {
 
 	headers := createHeader(m.Headers)
 	msgToSend := string(marshalledEvent)
-	err = (*h.messageProducer).SendMessage("", producer.Message{Headers: headers, Body: msgToSend})
+	err = h.messageProducer.SendMessage("", producer.Message{Headers: headers, Body: msgToSend})
 	if err != nil {
 		logger.warnMessageEvent(queueEvent{h.sc.serviceName, h.producerConfig.Queue, h.producerConfig.Topic, vm.tid}, videoUUID, err,
 			"Error sending transformed message to queue")

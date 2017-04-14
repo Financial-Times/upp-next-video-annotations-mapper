@@ -19,8 +19,8 @@ func TestAnnotationsCreation(t *testing.T) {
 	}{
 		{
 			[]annotation{
-				newAnnotation("id1", "isClassifiedBy"),
-				newAnnotation("id2", "about"),
+				newTestAnnotation("id1", "isClassifiedBy"),
+				newTestAnnotation("id2", "about"),
 			},
 			newConceptSuggestion(videoUUID,
 				newSuggestion("id1", "isClassifiedBy"),
@@ -29,33 +29,32 @@ func TestAnnotationsCreation(t *testing.T) {
 		},
 		{
 			[]annotation{},
-			ConceptSuggestion{videoUUID, []suggestion{}},
+			ConceptSuggestion{videoUUID, nil},
 		},
 	}
 
-	h := annHandler{videoUUID: videoUUID}
+	context := annsContext{videoUUID: videoUUID}
 	for _, test := range tests {
-		actualConceptSuggestion := h.createAnnotations(test.anns)
+		actualConceptSuggestion := createAnnotations(test.anns, context)
 		assert.Equal(test.expectedCs, actualConceptSuggestion, "Wrong conceptSuggestion. Input anns: [%v]", test.anns)
 	}
 }
 
-func newAnnotation(thingID string, predicate string) annotation {
+func newTestAnnotation(thingID string, predicate string) annotation {
 	return annotation{
-		thingID:     thingID,
+		thingID:   thingID,
 		predicate: predicate,
 	}
 }
 
 func newSuggestion(thingID string, predicate string) suggestion {
-	thing := thing{
+	t := thing{
 		ID:        thingID,
-		PrefLabel: "",
 		Predicate: predicate,
 		Types:     []string{},
 	}
 
-	return suggestion{Thing: thing, Provenance: provenances}
+	return suggestion{Thing: t, Provenance: provenances}
 }
 
 func newConceptSuggestion(videoUUID string, suggestions ...suggestion) ConceptSuggestion {

@@ -5,11 +5,13 @@ import (
 	"fmt"
 )
 
-const videoUUIDField = "id"
-const annotationsField = "annotations"
-const annotationIdField = "id"
-const annotationPredicateField = "predicate"
-const deletedField = "deleted"
+const (
+	videoUUIDField           = "id"
+	annotationsField         = "annotations"
+	annotationIDField        = "id"
+	annotationPredicateField = "predicate"
+	deletedField             = "deleted"
+)
 
 type videoMapper struct {
 	sc           serviceConfig
@@ -49,8 +51,7 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		return nil, videoUUID, nil
 	}
 
-	annHandler := annHandler{videoUUID: videoUUID, transactionID: vm.tid}
-	conceptSuggestion := annHandler.createAnnotations(annotations)
+	conceptSuggestion := createAnnotations(annotations, annsContext{videoUUID: videoUUID, transactionID: vm.tid})
 
 	marshalledPubEvent, err := json.Marshal(conceptSuggestion)
 	if err != nil {
@@ -64,7 +65,7 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{}, videoUUID string) []annotation {
 	var annotations = make([]annotation, 0)
 	for _, ann := range nextAnnsArray {
-		thingID, err := getRequiredStringField(annotationIdField, ann)
+		thingID, err := getRequiredStringField(annotationIDField, ann)
 		if err != nil {
 			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract concept id from annotation field")
 			continue
@@ -127,19 +128,6 @@ func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID stri
 		result = append(result, obj)
 	}
 	return result, nil
-}
-
-func getBoolField(key string, obj map[string]interface{}) (bool, error) {
-	valueI, ok := obj[key]
-	if !ok {
-		return false, nullFieldError(key)
-	}
-
-	val, ok := valueI.(bool)
-	if !ok {
-		return false, wrongFieldTypeError("bool", key, valueI)
-	}
-	return val, nil
 }
 
 func nullFieldError(fieldKey string) error {

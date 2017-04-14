@@ -14,11 +14,14 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 )
 
 const serviceDescription = "A RESTful API for mapping Next video editor annotations to UPP annotations"
 
 var logger *appLogger
+var timeout = 10 * time.Second
+var httpCl = &http.Client{Timeout: timeout}
 
 type serviceConfig struct {
 	serviceName string
@@ -101,11 +104,11 @@ func main() {
 			Queue: *writeQueue,
 		}
 
-		annMapper := queueHandler{sc: sc, consumerConfig: consumerConfig, producerConfig: producerConfig}
+		annMapper := queueHandler{sc: sc, httpCl: httpCl, consumerConfig: consumerConfig, producerConfig: producerConfig}
 		annMapper.init()
 
 		sh := serviceHandler{sc}
-		hc := healthCheck{client: http.Client{}, consumerConf: consumerConfig, producerConf: producerConfig, panicGuide: *panicGuide}
+		hc := healthCheck{httpCl: httpCl, consumerConf: consumerConfig, producerConf: producerConfig, panicGuide: *panicGuide}
 		go listen(sc, sh, hc)
 
 		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
@@ -131,19 +134,19 @@ func listen(sc serviceConfig, sh serviceHandler, hc healthCheck) {
 	}
 }
 
-func consumeUntilSigterm(messageConsumer *consumer.MessageConsumer, config consumer.QueueConfig) {
+func consumeUntilSigterm(messageConsumer consumer.MessageConsumer, config consumer.QueueConfig) {
 	logger.messageEvent(config.Topic, "Starting queue consumer")
 
 	var consumerWaitGroup sync.WaitGroup
 	consumerWaitGroup.Add(1)
 	go func() {
-		(*messageConsumer).Start()
+		messageConsumer.Start()
 		consumerWaitGroup.Done()
 	}()
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
-	(*messageConsumer).Stop()
+	messageConsumer.Stop()
 	consumerWaitGroup.Wait()
 }
 
