@@ -19,7 +19,7 @@ RUN apk --no-cache --virtual .build-dependencies add git go libc-dev ca-certific
   && cd $GOPATH/src/${REPO_PATH} \
   && go get -u github.com/kardianos/govendor \
   && $GOPATH/bin/govendor sync \
-  && go get -t ./... \
+  && go get -v \
   && go build -ldflags="${LDFLAGS}" \
   && mv upp-next-video-annotations-mapper /upp-next-video-annotations-mapper-app \
   && apk del .build-dependencies \
