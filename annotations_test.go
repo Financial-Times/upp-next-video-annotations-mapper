@@ -29,7 +29,7 @@ func TestAnnotationsCreation(t *testing.T) {
 		},
 		{
 			[]annotation{},
-			ConceptSuggestion{videoUUID, nil},
+			ConceptSuggestion{videoUUID, make([]suggestion, 0)},
 		},
 	}
 

@@ -55,7 +55,7 @@ type annsContext struct {
 }
 
 func createAnnotations(nextAnns []annotation, context annsContext) ConceptSuggestion {
-	var suggestions []suggestion
+	var suggestions = make([]suggestion, 0)
 	for _, nextAnn := range nextAnns {
 		suggestions = append(suggestions, newAnnotation(nextAnn))
 	}

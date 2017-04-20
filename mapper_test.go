@@ -263,8 +263,10 @@ func readContent(fileName string) (map[string]interface{}, error) {
 }
 
 func newStringConceptSuggestion(t *testing.T, videoUUID string, s []suggestion) string {
-	var suggestions []suggestion
-	suggestions = append(suggestions, s...)
+	var suggestions = make([]suggestion, 0)
+	if s != nil {
+		suggestions = append(suggestions, s...)
+	}
 	cs := newConceptSuggestion(videoUUID, suggestions...)
 	marshalledContent, err := json.Marshal(cs)
 	if err != nil {
