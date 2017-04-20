@@ -60,10 +60,6 @@ func createAnnotations(nextAnns []annotation, context annsContext) ConceptSugges
 		suggestions = append(suggestions, newAnnotation(nextAnn))
 	}
 
-	if len(suggestions) == 0 {
-		logger.videoEvent(context.transactionID, context.videoUUID, "No annotation could be mapped for the video")
-	}
-
 	return ConceptSuggestion{UUID: context.videoUUID, Suggestions: suggestions}
 }
 

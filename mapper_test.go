@@ -73,7 +73,7 @@ func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
 		{
 			"next-video-input.json",
 			newStringConceptSuggestion(t, "e2290d14-7e80-4db8-a715-949da4de9a07",
-				newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy"),
+				[]suggestion{newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy")},
 			),
 			"e2290d14-7e80-4db8-a715-949da4de9a07",
 			false,
@@ -220,7 +220,7 @@ func TestGetObjectsArrayField(t *testing.T) {
 		},
 		{
 			"no_key",
-			nil,
+			make([]map[string]interface{}, 0),
 			false,
 		},
 		{
@@ -262,8 +262,10 @@ func readContent(fileName string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func newStringConceptSuggestion(t *testing.T, videoUUID string, s suggestion) string {
-	cs := newConceptSuggestion(videoUUID, s)
+func newStringConceptSuggestion(t *testing.T, videoUUID string, s []suggestion) string {
+	var suggestions []suggestion
+	suggestions = append(suggestions, s...)
+	cs := newConceptSuggestion(videoUUID, suggestions...)
 	marshalledContent, err := json.Marshal(cs)
 	if err != nil {
 		assert.Fail(t, err.Error())

@@ -37,18 +37,14 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	}
 
 	nextAnnsArray, err := getObjectsArrayField(annotationsField, vm.unmarshalled, videoUUID, vm)
-	switch {
-	case err != nil:
+	if err != nil {
 		return nil, videoUUID, err
-	case nextAnnsArray == nil:
-		return nil, videoUUID, nil
 	}
 
 	annotations := vm.retrieveAnnotations(nextAnnsArray, videoUUID)
 
 	if len(annotations) == 0 {
 		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprintf("No annotation could be retrieved for Next video: [%s]", vm.strContent))
-		return nil, videoUUID, nil
 	}
 
 	conceptSuggestion := createAnnotations(annotations, annsContext{videoUUID: videoUUID, transactionID: vm.tid})
@@ -107,10 +103,11 @@ func getRequiredStringField(key string, obj map[string]interface{}) (string, err
 
 func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID string, vm *videoMapper) ([]map[string]interface{}, error) {
 	var objArrayI interface{}
+	var result = make([]map[string]interface{}, 0)
 	objArrayI, ok := obj[key]
 	if !ok {
 		logger.videoMapEvent(vm.tid, videoUUID, nullFieldError(key).Error())
-		return nil, nil
+		return result, nil
 	}
 
 	var objArray []interface{}
@@ -119,7 +116,6 @@ func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID stri
 		return nil, wrongFieldTypeError("object array", key, objArrayI)
 	}
 
-	var result = make([]map[string]interface{}, 0)
 	for _, objI := range objArray {
 		obj, ok = objI.(map[string]interface{})
 		if !ok {
