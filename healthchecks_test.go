@@ -28,7 +28,7 @@ func TestCheckMessageQueueAvailability(t *testing.T) {
 	startQueueServerMock(statusOK)
 	defer queueServerMock.Close()
 
-	h := healthCheck{
+	h := queueHealthCheck{
 		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
@@ -45,7 +45,7 @@ func TestCheckMessageQueueNonAvailability(t *testing.T) {
 	startQueueServerMock(statusNA)
 	defer queueServerMock.Close()
 
-	h := healthCheck{
+	h := queueHealthCheck{
 		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
@@ -61,7 +61,7 @@ func TestCheckMessageQueueMissingTopic(t *testing.T) {
 	startQueueServerMock(statusMissingTopics)
 	defer queueServerMock.Close()
 
-	h := healthCheck{
+	h := queueHealthCheck{
 		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
@@ -92,7 +92,7 @@ func TestCheckMessageQueueWrongQueueURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		h := healthCheck{
+		h := queueHealthCheck{
 			httpCl:       &http.Client{},
 			consumerConf: test.consumerConfig,
 			producerConf: test.producerConfig,

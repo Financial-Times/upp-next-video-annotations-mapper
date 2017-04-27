@@ -4,32 +4,40 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	fthealth "github.com/Financial-Times/go-fthealth/v1a"
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"io/ioutil"
 	"net/http"
 )
 
-type healthCheck struct {
-	httpCl       *http.Client
-	consumerConf consumer.QueueConfig
-	producerConf producer.MessageProducerConfig
-	panicGuide   string
+type queueHealthCheck struct {
+	httpCl        *http.Client
+	consumerConf  consumer.QueueConfig
+	producerConf  producer.MessageProducerConfig
+	serviceName   string
+	appSystemCode string
+	panicGuide    string
 }
 
-func (h *healthCheck) check() fthealth.Check {
+func (h *queueHealthCheck) healthCheck() *fthealth.HealthCheck {
+	checks := []fthealth.Check{h.queueCheck()}
+	return &fthealth.HealthCheck{SystemCode: h.appSystemCode, Name: h.serviceName, Description: serviceDescription, Checks: checks}
+}
+
+func (h *queueHealthCheck) queueCheck() fthealth.Check {
 	return fthealth.Check{
-		BusinessImpact:   "Annotations from published Next videos will not be created, clients will not see them within content.",
-		Name:             "MessageQueueProxyReachable",
-		PanicGuide:       h.panicGuide,
+		ID:               "message-queue-proxy-reachable",
+		Name:             "Message Queue Proxy Reachable",
 		Severity:         1,
+		BusinessImpact:   "Annotations from published Next videos will not be created, clients will not see them within content.",
 		TechnicalSummary: "Message queue proxy is not reachable/healthy",
+		PanicGuide:       h.panicGuide,
 		Checker:          h.checkAggregateMessageQueueProxiesReachable,
 	}
 }
 
-func (h *healthCheck) checkAggregateMessageQueueProxiesReachable() (string, error) {
+func (h *queueHealthCheck) checkAggregateMessageQueueProxiesReachable() (string, error) {
 	var errMsg string
 
 	err := h.checkMessageQueueProxyReachable(h.producerConf.Addr, h.producerConf.Topic, h.producerConf.Authorization, h.producerConf.Queue)
@@ -47,7 +55,7 @@ func (h *healthCheck) checkAggregateMessageQueueProxiesReachable() (string, erro
 	return errMsg, errors.New(errMsg)
 }
 
-func (h *healthCheck) checkMessageQueueProxyReachable(address string, topic string, authKey string, queue string) error {
+func (h *queueHealthCheck) checkMessageQueueProxyReachable(address string, topic string, authKey string, queue string) error {
 	req, err := http.NewRequest("GET", address+"/topics", nil)
 	if err != nil {
 		logger.messageEvent(topic, fmt.Sprintf("Could not connect to proxy: %v", err.Error()))

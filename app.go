@@ -1,7 +1,7 @@
 package main
 
 import (
-	fthealth "github.com/Financial-Times/go-fthealth/v1a"
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"github.com/Financial-Times/service-status-go/httphandlers"
@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const serviceDescription = "A RESTful API for mapping Next video editor annotations to UPP annotations"
+const serviceDescription = "Get the Next video content from queue, transforms annotations to an internal representaiton and puts the new content to queue."
 
 var logger *appLogger
 var timeout = 10 * time.Second
@@ -29,8 +29,19 @@ type serviceConfig struct {
 }
 
 func main() {
-	app := cli.App("upp-next-video-annotations-mapper", serviceDescription)
-	serviceName := app.StringOpt("app-name", "next-video-annotations-mapper", "The name of this service")
+	app := cli.App("next-video-annotations-mapper", serviceDescription)
+	serviceName := app.String(cli.StringOpt{
+		Name:   "app-name",
+		Value:  "next-video-annotations-mapper",
+		Desc:   "The name of this service",
+		EnvVar: "APP_NAME",
+	})
+	systemCode := app.String(cli.StringOpt{
+		Name:   "app-system-code",
+		Value:  "next-video-annotations-mapper",
+		Desc:   "App system code",
+		EnvVar: "APP_SYSTEM_CODE",
+	})
 	appPort := app.String(cli.StringOpt{
 		Name:   "app-port",
 		Value:  "8084",
@@ -108,7 +119,14 @@ func main() {
 		annMapper.init()
 
 		sh := serviceHandler{sc}
-		hc := healthCheck{httpCl: httpCl, consumerConf: consumerConfig, producerConf: producerConfig, panicGuide: *panicGuide}
+		hc := queueHealthCheck{
+			httpCl:        httpCl,
+			consumerConf:  consumerConfig,
+			producerConf:  producerConfig,
+			serviceName:   *serviceName,
+			appSystemCode: *systemCode,
+			panicGuide:    *panicGuide,
+		}
 		go listen(sc, sh, hc)
 
 		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
@@ -119,12 +137,12 @@ func main() {
 	}
 }
 
-func listen(sc serviceConfig, sh serviceHandler, hc healthCheck) {
+func listen(sc serviceConfig, sh serviceHandler, hc queueHealthCheck) {
 	r := mux.NewRouter()
 	r.Path("/map").Handler(handlers.MethodHandler{"POST": http.HandlerFunc(sh.mapRequest)})
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
-	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(sc.serviceName, serviceDescription, hc.check()))})
+	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(hc.healthCheck()))})
 
 	logger.serviceStartedEvent(sc.asMap())
 
