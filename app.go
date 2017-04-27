@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const serviceDescription = "Get the Next video content from queue, transforms annotations to an internal representaiton and puts the new content to queue."
+const serviceDescription = "Gets the Next video content from queue, transforms annotations to an internal representation and puts a new created annotation content to queue."
 
 var logger *appLogger
 var timeout = 10 * time.Second
