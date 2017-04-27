@@ -31,9 +31,15 @@ type serviceConfig struct {
 func main() {
 	app := cli.App("next-video-annotations-mapper", serviceDescription)
 	serviceName := app.String(cli.StringOpt{
-		Name:   "app-name",
+		Name:   "service-name",
 		Value:  "next-video-annotations-mapper",
 		Desc:   "The name of this service",
+		EnvVar: "SERVICE_NAME",
+	})
+	appName := app.String(cli.StringOpt{
+		Name:   "app-name",
+		Value:  "Next Video Annotations Mapper",
+		Desc:   "The name of the application",
 		EnvVar: "APP_NAME",
 	})
 	systemCode := app.String(cli.StringOpt{
@@ -123,7 +129,7 @@ func main() {
 			httpCl:        httpCl,
 			consumerConf:  consumerConfig,
 			producerConf:  producerConfig,
-			serviceName:   *serviceName,
+			appName:       *appName,
 			appSystemCode: *systemCode,
 			panicGuide:    *panicGuide,
 		}

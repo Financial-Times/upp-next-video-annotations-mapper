@@ -15,14 +15,14 @@ type queueHealthCheck struct {
 	httpCl        *http.Client
 	consumerConf  consumer.QueueConfig
 	producerConf  producer.MessageProducerConfig
-	serviceName   string
+	appName       string
 	appSystemCode string
 	panicGuide    string
 }
 
 func (h *queueHealthCheck) healthCheck() *fthealth.HealthCheck {
 	checks := []fthealth.Check{h.queueCheck()}
-	return &fthealth.HealthCheck{SystemCode: h.appSystemCode, Name: h.serviceName, Description: serviceDescription, Checks: checks}
+	return &fthealth.HealthCheck{SystemCode: h.appSystemCode, Name: h.appName, Description: serviceDescription, Checks: checks}
 }
 
 func (h *queueHealthCheck) queueCheck() fthealth.Check {
