@@ -1,13 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -77,25 +75,5 @@ func (h *queueHealthCheck) checkMessageQueueProxyReachable(address string, topic
 		errMsg := fmt.Sprintf("Proxy returned status: %d", resp.StatusCode)
 		return errors.New(errMsg)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		logger.messageEvent(topic, fmt.Sprintf("Could not read queue response: %v", err.Error()))
-		return err
-	}
-
-	return checkIfTopicIsPresent(body, topic)
-}
-
-func checkIfTopicIsPresent(body []byte, searchedTopic string) error {
-	var topics []string
-	err := json.Unmarshal(body, &topics)
-	if err != nil {
-		return fmt.Errorf("Error occured and topic could not be found. %v", err.Error())
-	}
-	for _, topic := range topics {
-		if topic == searchedTopic {
-			return nil
-		}
-	}
-	return errors.New("Topic was not found")
+	return nil
 }
