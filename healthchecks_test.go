@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"github.com/gorilla/handlers"
@@ -15,9 +14,6 @@ import (
 const (
 	statusOK int = 1 + iota
 	statusNA
-	statusMissingTopics
-	consumerTopic = "NativeCmsPublicationEvents"
-	producerTopic = "V1ConceptAnnotations"
 )
 
 var queueServerMock *httptest.Server
@@ -28,7 +24,7 @@ func TestCheckMessageQueueAvailability(t *testing.T) {
 	startQueueServerMock(statusOK)
 	defer queueServerMock.Close()
 
-	h := healthCheck{
+	h := queueHealthCheck{
 		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
@@ -45,23 +41,7 @@ func TestCheckMessageQueueNonAvailability(t *testing.T) {
 	startQueueServerMock(statusNA)
 	defer queueServerMock.Close()
 
-	h := healthCheck{
-		httpCl:       &http.Client{},
-		consumerConf: newConsumerConfig(queueServerMock.URL),
-		producerConf: newProducerConfig(queueServerMock.URL),
-	}
-
-	_, err := h.checkAggregateMessageQueueProxiesReachable()
-	assert.Equal(true, err != nil, "Error was expected.")
-}
-
-func TestCheckMessageQueueMissingTopic(t *testing.T) {
-	assert := assert.New(t)
-
-	startQueueServerMock(statusMissingTopics)
-	defer queueServerMock.Close()
-
-	h := healthCheck{
+	h := queueHealthCheck{
 		httpCl:       &http.Client{},
 		consumerConf: newConsumerConfig(queueServerMock.URL),
 		producerConf: newProducerConfig(queueServerMock.URL),
@@ -92,7 +72,7 @@ func TestCheckMessageQueueWrongQueueURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		h := healthCheck{
+		h := queueHealthCheck{
 			httpCl:       &http.Client{},
 			consumerConf: test.consumerConfig,
 			producerConf: test.producerConfig,
@@ -112,8 +92,6 @@ func startQueueServerMock(status int) {
 		getContent = statusOKHandler
 	case statusNA:
 		getContent = internalErrorHandler
-	case statusMissingTopics:
-		getContent = statusMissingTopicsHandler
 	}
 
 	router.Path("/topics").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(getContent)})
@@ -122,23 +100,7 @@ func startQueueServerMock(status int) {
 }
 
 func statusOKHandler(w http.ResponseWriter, r *http.Request) {
-	writeTopics(w, consumerTopic, producerTopic)
-}
-
-func statusMissingTopicsHandler(w http.ResponseWriter, r *http.Request) {
-	writeTopics(w, "OtherTopic")
-}
-
-func writeTopics(w http.ResponseWriter, topics ...string) {
 	w.WriteHeader(http.StatusOK)
-	b, err := json.Marshal(topics)
-	if err != nil {
-		panic("Unexpected error during response topics write")
-	}
-	_, err = w.Write(b)
-	if err != nil {
-		panic("Unexpected error during response topics write")
-	}
 }
 
 func internalErrorHandler(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +110,6 @@ func internalErrorHandler(w http.ResponseWriter, r *http.Request) {
 func newConsumerConfig(addr string) consumer.QueueConfig {
 	return consumer.QueueConfig{
 		Addrs:            []string{addr},
-		Topic:            consumerTopic,
 		Queue:            "queue",
 		AuthorizationKey: "auth",
 	}
@@ -157,7 +118,6 @@ func newConsumerConfig(addr string) consumer.QueueConfig {
 func newProducerConfig(addr string) producer.MessageProducerConfig {
 	return producer.MessageProducerConfig{
 		Addr:          addr,
-		Topic:         producerTopic,
 		Queue:         "queue",
 		Authorization: "auth",
 	}
