@@ -7,6 +7,7 @@ import (
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"net/http/httptest"
 )
 
@@ -18,14 +19,18 @@ func initializeHealthCheck(isProducerConnectionHealthy bool, isConsumerConnectio
 }
 
 func TestNewHealthCheck(t *testing.T) {
-	c := &consumer.QueueConfig{}
-	p := &producer.MessageProducerConfig{}
-	hc := newHealthCheck(p, c, "appName", "systemCode", "panicGuide")
+	hc := NewHealthCheck(
+		producer.NewMessageProducer(producer.MessageProducerConfig{}),
+		consumer.NewConsumer(consumer.QueueConfig{}, func(m consumer.Message) {}, http.DefaultClient),
+		"appName",
+		"appSystemCode",
+		"panicGuide",
+	)
 
 	assert.NotNil(t, hc.consumer)
 	assert.NotNil(t, hc.producer)
 	assert.Equal(t, "appName", hc.appName)
-	assert.Equal(t, "systemCode", hc.appSystemCode)
+	assert.Equal(t, "appSystemCode", hc.appSystemCode)
 	assert.Equal(t, "panicGuide", hc.panicGuide)
 }
 

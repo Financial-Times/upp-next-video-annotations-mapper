@@ -125,7 +125,7 @@ func main() {
 		annMapper.init()
 
 		sh := serviceHandler{sc}
-		hc := newHealthCheck(&producerConfig, &consumerConfig, *appName, *systemCode, *panicGuide)
+		hc := NewHealthCheck(annMapper.messageProducer, annMapper.messageConsumer, *appName, *systemCode, *panicGuide)
 		go listen(sc, sh, hc)
 
 		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
