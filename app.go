@@ -1,7 +1,13 @@
 package main
 
 import (
-	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"github.com/Financial-Times/service-status-go/httphandlers"
@@ -9,12 +15,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
-	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
 )
 
 const serviceDescription = "Gets the Next video content from queue, transforms annotations to an internal representation and puts a new created annotation content to queue."
@@ -125,14 +125,7 @@ func main() {
 		annMapper.init()
 
 		sh := serviceHandler{sc}
-		hc := queueHealthCheck{
-			httpCl:        httpCl,
-			consumerConf:  consumerConfig,
-			producerConf:  producerConfig,
-			appName:       *appName,
-			appSystemCode: *systemCode,
-			panicGuide:    *panicGuide,
-		}
+		hc := NewHealthCheck(annMapper.messageProducer, annMapper.messageConsumer, *appName, *systemCode, *panicGuide)
 		go listen(sc, sh, hc)
 
 		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
@@ -143,12 +136,13 @@ func main() {
 	}
 }
 
-func listen(sc serviceConfig, sh serviceHandler, hc queueHealthCheck) {
+func listen(sc serviceConfig, sh serviceHandler, hc *HealthCheck) {
 	r := mux.NewRouter()
 	r.Path("/map").Handler(handlers.MethodHandler{"POST": http.HandlerFunc(sh.mapRequest)})
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
 	r.Path(httphandlers.PingPath).HandlerFunc(httphandlers.PingHandler)
-	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(fthealth.Handler(hc.healthCheck()))})
+	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(hc.Health())})
+	r.Path(httphandlers.GTGPath).HandlerFunc(httphandlers.NewGoodToGoHandler(hc.GTG))
 
 	logger.serviceStartedEvent(sc.asMap())
 
