@@ -30,7 +30,7 @@ func TestBuildAnnotations(t *testing.T) {
 	vm := videoMapper{}
 	tests := []struct {
 		nextAnns     []map[string]interface{}
-		expectedAnns []annotation
+		expectedAnns []tag
 	}{
 		{
 			[]map[string]interface{}{
@@ -38,7 +38,7 @@ func TestBuildAnnotations(t *testing.T) {
 				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "unknown_predicate_id"),
 				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "http://www.ft.com/ontology/annotation/mentions"),
 			},
-			[]annotation{
+			[]tag{
 				{"http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", "isClassifiedBy"},
 				{"http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-123456666677", "mentions"},
 			},
@@ -47,13 +47,13 @@ func TestBuildAnnotations(t *testing.T) {
 			[]map[string]interface{}{
 				newNextAnnotation(nil, "http://www.ft.com/ontology/annotation/mentions"),
 			},
-			[]annotation{},
+			[]tag{},
 		},
 		{
 			[]map[string]interface{}{
 				newNextAnnotation("http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740", nil),
 			},
-			[]annotation{},
+			[]tag{},
 		},
 	}
 	for _, test := range tests {
@@ -72,8 +72,8 @@ func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
 	}{
 		{
 			"next-video-input.json",
-			newStringConceptSuggestion(t, "e2290d14-7e80-4db8-a715-949da4de9a07",
-				[]suggestion{newSuggestion("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy")},
+			newStringConceptAnnotation(t, "e2290d14-7e80-4db8-a715-949da4de9a07",
+				[]annotation{newTestAnnotation("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy")},
 			),
 			"e2290d14-7e80-4db8-a715-949da4de9a07",
 			false,
@@ -262,12 +262,12 @@ func readContent(fileName string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func newStringConceptSuggestion(t *testing.T, videoUUID string, s []suggestion) string {
-	var suggestions = make([]suggestion, 0)
+func newStringConceptAnnotation(t *testing.T, videoUUID string, s []annotation) string {
+	var annotations = make([]annotation, 0)
 	if s != nil {
-		suggestions = append(suggestions, s...)
+		annotations = append(annotations, s...)
 	}
-	cs := newConceptSuggestion(videoUUID, suggestions...)
+	cs := newConceptAnnotation(videoUUID, annotations...)
 	marshalledContent, err := json.Marshal(cs)
 	if err != nil {
 		assert.Fail(t, err.Error())

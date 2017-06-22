@@ -14,49 +14,49 @@ func init() {
 func TestAnnotationsCreation(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		anns       []annotation
-		expectedCs ConceptSuggestion
+		tags       []tag
+		expectedCs ConceptAnnotation
 	}{
 		{
-			[]annotation{
+			[]tag{
+				newTestTag("id1", "isClassifiedBy"),
+				newTestTag("id2", "about"),
+			},
+			newConceptAnnotation(videoUUID,
 				newTestAnnotation("id1", "isClassifiedBy"),
 				newTestAnnotation("id2", "about"),
-			},
-			newConceptSuggestion(videoUUID,
-				newSuggestion("id1", "isClassifiedBy"),
-				newSuggestion("id2", "about"),
 			),
 		},
 		{
-			[]annotation{},
-			ConceptSuggestion{videoUUID, make([]suggestion, 0)},
+			[]tag{},
+			ConceptAnnotation{videoUUID, make([]annotation, 0)},
 		},
 	}
 
 	context := annsContext{videoUUID: videoUUID}
 	for _, test := range tests {
-		actualConceptSuggestion := createAnnotations(test.anns, context)
-		assert.Equal(test.expectedCs, actualConceptSuggestion, "Wrong conceptSuggestion. Input anns: [%v]", test.anns)
+		actualConceptAnnotations := createAnnotations(test.tags, context)
+		assert.Equal(test.expectedCs, actualConceptAnnotations, "Wrong conceptAnnotation. Input anns: [%v]", test.tags)
 	}
 }
 
-func newTestAnnotation(thingID string, predicate string) annotation {
-	return annotation{
+func newTestTag(thingID string, predicate string) tag {
+	return tag{
 		thingID:   thingID,
 		predicate: predicate,
 	}
 }
 
-func newSuggestion(thingID string, predicate string) suggestion {
+func newTestAnnotation(thingID string, predicate string) annotation {
 	t := thing{
 		ID:        thingID,
 		Predicate: predicate,
 		Types:     []string{},
 	}
 
-	return suggestion{Thing: t, Provenance: provenances}
+	return annotation{Thing: t, Provenance: provenances}
 }
 
-func newConceptSuggestion(videoUUID string, suggestions ...suggestion) ConceptSuggestion {
-	return ConceptSuggestion{videoUUID, suggestions}
+func newConceptAnnotation(videoUUID string, annotations ...annotation) ConceptAnnotation {
+	return ConceptAnnotation{videoUUID, annotations}
 }

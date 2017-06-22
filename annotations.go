@@ -7,13 +7,13 @@ const (
 	defaultRelevanceScore  = 0.9
 )
 
-// ConceptSuggestion models the suggestion as it will be written on the queue
-type ConceptSuggestion struct {
+// ConceptAnnotation models the annotation as it will be written on the queue
+type ConceptAnnotation struct {
 	UUID        string       `json:"uuid"`
-	Suggestions []suggestion `json:"suggestions"`
+	Annotations []annotation `json:"annotations"`
 }
 
-type suggestion struct {
+type annotation struct {
 	Thing      thing        `json:"thing"`
 	Provenance []provenance `json:"provenances,omitempty"`
 }
@@ -54,21 +54,21 @@ type annsContext struct {
 	transactionID string
 }
 
-func createAnnotations(nextAnns []annotation, context annsContext) ConceptSuggestion {
-	var suggestions = make([]suggestion, 0)
+func createAnnotations(nextAnns []tag, context annsContext) ConceptAnnotation {
+	var annotations = make([]annotation, 0)
 	for _, nextAnn := range nextAnns {
-		suggestions = append(suggestions, newAnnotation(nextAnn))
+		annotations = append(annotations, newAnnotation(nextAnn))
 	}
 
-	return ConceptSuggestion{UUID: context.videoUUID, Suggestions: suggestions}
+	return ConceptAnnotation{UUID: context.videoUUID, Annotations: annotations}
 }
 
-func newAnnotation(nextAnn annotation) suggestion {
+func newAnnotation(nextAnn tag) annotation {
 	t := thing{
 		ID:        nextAnn.thingID,
 		Predicate: nextAnn.predicate,
 		Types:     []string{},
 	}
 
-	return suggestion{Thing: t, Provenance: provenances}
+	return annotation{Thing: t, Provenance: provenances}
 }
