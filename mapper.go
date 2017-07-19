@@ -20,7 +20,7 @@ type videoMapper struct {
 	unmarshalled map[string]interface{}
 }
 
-type annotation struct {
+type tag struct {
 	thingID   string
 	predicate string
 }
@@ -47,9 +47,9 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprintf("No annotation could be retrieved for Next video: [%s]", vm.strContent))
 	}
 
-	conceptSuggestion := createAnnotations(annotations, annsContext{videoUUID: videoUUID, transactionID: vm.tid})
+	conceptAnnotations := createAnnotations(annotations, annsContext{videoUUID: videoUUID, transactionID: vm.tid})
 
-	marshalledPubEvent, err := json.Marshal(conceptSuggestion)
+	marshalledPubEvent, err := json.Marshal(conceptAnnotations)
 	if err != nil {
 		logger.videoEvent(vm.tid, videoUUID, "Error marshalling processed annotations")
 		return nil, videoUUID, err
@@ -58,8 +58,8 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	return marshalledPubEvent, videoUUID, nil
 }
 
-func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{}, videoUUID string) []annotation {
-	var annotations = make([]annotation, 0)
+func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{}, videoUUID string) []tag {
+	var annotations = make([]tag, 0)
 	for _, ann := range nextAnnsArray {
 		thingID, err := getRequiredStringField(annotationIDField, ann)
 		if err != nil {
@@ -79,7 +79,7 @@ func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{
 			continue
 		}
 
-		ann := annotation{
+		ann := tag{
 			thingID:   thingID,
 			predicate: predicate,
 		}

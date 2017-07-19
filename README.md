@@ -2,7 +2,7 @@
 
 # Next Video Annotations Mapper (next-video-annotations-mapper)
 
-Next Video Annotations Mapper transforms the annotations as received from Next within the video content to an internal format acceptable for further processing and storing on Neo4J.
+Next Video Annotations Mapper transforms the metadata as received from Next within the video content to an internal format acceptable for further processing and storing on Neo4J.
 Video content from Next is got from the Kafka(-bridge) queue where the application listens on topic NativeCmsPublicationEvents, the annotations and video uuid information is
 used for transformation, resulting content being put back to Kafka(-bridge) on V1ConceptAnnotations topic.
 
@@ -185,7 +185,7 @@ Body:
 ```
 {
   "uuid": "e2290d14-7e80-4db8-a715-949da4de9a07",
-  "suggestions": [
+  "annotations": [
     {
       "thing": {
         "id": "http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740",
