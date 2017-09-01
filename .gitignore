@@ -3,5 +3,5 @@
 *coverage.*
 *.iml
 .idea/
-upp-next-video-annotations-mapper*
+/upp-next-video-annotations-mapper*
 vendor/*/
