@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"github.com/Financial-Times/service-status-go/httphandlers"
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
@@ -19,7 +19,6 @@ import (
 
 const serviceDescription = "Gets the Next video content from queue, transforms annotations to an internal representation and puts a new created annotation content to queue."
 
-var logger *appLogger
 var timeout = 10 * time.Second
 var httpCl = &http.Client{Timeout: timeout}
 
@@ -97,10 +96,13 @@ func main() {
 		EnvVar: "Q_WRITE_QUEUE",
 	})
 
+	logger.InitDefaultLogger(*serviceName)
+	logger.Infof("[Startup] %s is starting ", *serviceName)
+
 	app.Action = func() {
-		logger = newAppLogger(*serviceName)
+
 		if len(*addresses) == 0 {
-			logger.log.Info("No queue address provided. Quitting...")
+			logger.Info("No queue address provided. Quitting...")
 			cli.Exit(1)
 		}
 		sc := serviceConfig{
@@ -132,7 +134,7 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		println(err)
+		logger.Errorf("%v", err)
 	}
 }
 
@@ -144,16 +146,17 @@ func listen(sc serviceConfig, sh serviceHandler, hc *HealthCheck) {
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(hc.Health())})
 	r.Path(httphandlers.GTGPath).HandlerFunc(httphandlers.NewGoodToGoHandler(hc.GTG))
 
-	logger.serviceStartedEvent(sc.asMap())
+	logger.WithFields(sc.asMap()).Info("Service started with configuration")
 
 	err := http.ListenAndServe(":"+sc.appPort, r)
 	if err != nil {
-		logrus.Fatalf("Unable to start server: %v", err)
+		logger.Fatalf("Unable to start server: %v", err)
 	}
 }
 
 func consumeUntilSigterm(messageConsumer consumer.MessageConsumer, config consumer.QueueConfig) {
-	logger.messageEvent(config.Topic, "Starting queue consumer")
+
+	logger.WithFields(map[string]interface{}{"event": "consume_queue", "queue_topic": config.Topic}).Info("Starting queue consumer")
 
 	var consumerWaitGroup sync.WaitGroup
 	consumerWaitGroup.Add(1)

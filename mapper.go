@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/Financial-Times/go-logger"
 )
 
 const (
@@ -31,11 +33,6 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 		return nil, "", err
 	}
 
-	if vm.isDeleteEvent() {
-		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprint("Ignoring delete Next video message."))
-		return nil, videoUUID, nil
-	}
-
 	nextAnnsArray, err := getObjectsArrayField(annotationsField, vm.unmarshalled, videoUUID, vm)
 	if err != nil {
 		return nil, videoUUID, err
@@ -44,14 +41,15 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	annotations := vm.retrieveAnnotations(nextAnnsArray, videoUUID)
 
 	if len(annotations) == 0 {
-		logger.videoMapEvent(vm.tid, videoUUID, fmt.Sprintf("No annotation could be retrieved for Next video: [%s]", vm.strContent))
+		logger.WithTransactionID(vm.tid).
+			WithUUID(videoUUID).
+			Infof("No annotation could be retrieved for Next video: [%s]", vm.strContent)
 	}
 
 	conceptAnnotations := createAnnotations(annotations, annsContext{videoUUID: videoUUID, transactionID: vm.tid})
 
 	marshalledPubEvent, err := json.Marshal(conceptAnnotations)
 	if err != nil {
-		logger.videoEvent(vm.tid, videoUUID, "Error marshalling processed annotations")
 		return nil, videoUUID, err
 	}
 
@@ -63,19 +61,27 @@ func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{
 	for _, ann := range nextAnnsArray {
 		thingID, err := getRequiredStringField(annotationIDField, ann)
 		if err != nil {
-			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract concept id from annotation field")
+			logger.WithTransactionID(vm.tid).
+				WithUUID(videoUUID).
+				WithError(err).
+				Error("Cannot extract concept id from annotation field")
 			continue
 		}
 
 		nextAnnPredicate, err := getRequiredStringField(annotationPredicateField, ann)
 		if err != nil {
-			logger.videoErrorEvent(vm.tid, videoUUID, err, "Cannot extract predicate from annotation field")
+			logger.WithTransactionID(vm.tid).
+				WithUUID(videoUUID).
+				WithError(err).
+				Error("Cannot extract predicate from annotation field")
 			continue
 		}
 
 		predicate, ok := getPredicateShortForm(nextAnnPredicate)
 		if !ok {
-			logger.videoErrorEvent(vm.tid, videoUUID, err, fmt.Sprint("Next video predicate id is not known:", nextAnnPredicate))
+			logger.WithTransactionID(vm.tid).
+				WithUUID(videoUUID).
+				Errorf("Next video predicate id is not known:", nextAnnPredicate)
 			continue
 		}
 
@@ -106,7 +112,9 @@ func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID stri
 	var result = make([]map[string]interface{}, 0)
 	objArrayI, ok := obj[key]
 	if !ok {
-		logger.videoMapEvent(vm.tid, videoUUID, nullFieldError(key).Error())
+		logger.WithTransactionID(vm.tid).
+			WithUUID(videoUUID).
+			Info(nullFieldError(key).Error())
 		return result, nil
 	}
 

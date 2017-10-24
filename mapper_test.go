@@ -2,15 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"testing"
+
+	"github.com/Financial-Times/go-logger"
+	"github.com/stretchr/testify/assert"
 )
 
 var testMap = make(map[string]interface{})
 
 func init() {
-	logger = newAppLogger("test")
+	logger.InitDefaultLogger("video-annotations-mapper")
 	testMap["string"] = "value1"
 	testMap["nullstring"] = nil
 	testMap["bool"] = true
@@ -136,13 +138,13 @@ func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
 func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		fileName           string
-		expectedContentNil bool
-		expectedErrStatus  bool
+		fileName          string
+		expectedContent   ConceptAnnotation
+		expectedErrStatus bool
 	}{
 		{
 			"next-video-delete-input.json",
-			true,
+			ConceptAnnotation{"e2290d14-7e80-4db8-a715-949da4de9a07", []annotation{}},
 			false,
 		},
 	}
@@ -154,7 +156,10 @@ func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
 		}
 		vm := videoMapper{unmarshalled: nextVideo}
 		marshalledContent, _, err := vm.mapNextVideoAnnotations()
-		assert.Equal(test.expectedContentNil, marshalledContent == nil, "Marshalled content nil status wrong. Input JSON: %s", test.fileName)
+		var concept ConceptAnnotation
+		err = json.Unmarshal(marshalledContent, &concept)
+		assert.Nil(err)
+		assert.Equal(test.expectedContent, concept, "Marshalled content differs from expected. Input JSON: %s", test.fileName)
 		assert.Equal(test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
 	}
 }
