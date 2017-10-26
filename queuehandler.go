@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -70,7 +69,7 @@ func (h *queueHandler) queueConsume(m consumer.Message) {
 		WithValidFlag(true).
 		WithUUID(videoUUID).
 		WithFields(map[string]interface{}{"queue_name": h.consumerConfig.Queue, "queue_topic": h.consumerConfig.Topic}).
-		Infof("Mapped and sent: [%v]", msgToSend)
+		Info("Mapped and sent.")
 }
 
 func (h *queueHandler) mapNextVideoAnnotationsMessage(vm *videoMapper) ([]byte, string, error) {
@@ -79,10 +78,10 @@ func (h *queueHandler) mapNextVideoAnnotationsMessage(vm *videoMapper) ([]byte, 
 		Warnf("Start mapping next video message.")
 
 	if err := json.Unmarshal([]byte(vm.strContent), &vm.unmarshalled); err != nil {
-		return nil, "", fmt.Errorf("Video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON: %v", err.Error(), vm.strContent)
+		return nil, "", fmt.Errorf("Video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON with tid: %s.", err.Error(), vm.tid)
 	}
 	if vm.tid == "" {
-		return nil, "", errors.New("X-Request-Id not found in kafka message headers. Skipping message")
+		return nil, "", fmt.Errorf("X-Request-Id not found in kafka message headers. Skipping message with tid %s", vm.tid)
 	}
 	return vm.mapNextVideoAnnotations()
 }

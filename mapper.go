@@ -43,7 +43,7 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	if len(annotations) == 0 {
 		logger.WithTransactionID(vm.tid).
 			WithUUID(videoUUID).
-			Infof("No annotation could be retrieved for Next video: [%s]", vm.strContent)
+			Info("No annotation could be retrieved for Next video")
 	}
 
 	conceptAnnotations := createAnnotations(annotations, annsContext{videoUUID: videoUUID, transactionID: vm.tid})
@@ -139,7 +139,7 @@ func nullFieldError(fieldKey string) error {
 }
 
 func wrongFieldTypeError(expectedType, fieldKey string, value interface{}) error {
-	return fmt.Errorf("[%s] field of native Next video JSON is not of type %s: [%v]", fieldKey, expectedType, value)
+	return fmt.Errorf("[%s] field of native Next video JSON is not of type %s.", fieldKey, expectedType)
 }
 
 func (vm *videoMapper) isDeleteEvent() bool {

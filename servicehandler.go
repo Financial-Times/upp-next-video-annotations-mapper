@@ -39,7 +39,7 @@ func (h serviceHandler) mapRequest(w http.ResponseWriter, r *http.Request) {
 
 func (h serviceHandler) mapNextVideoAnnotationsRequest(vm *videoMapper) ([]byte, string, error) {
 	if err := json.Unmarshal([]byte(vm.strContent), &vm.unmarshalled); err != nil {
-		return nil, "", fmt.Errorf("Video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON: %v", err.Error(), vm.strContent)
+		return nil, "", fmt.Errorf("Video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON with tid: %s", err.Error(), vm.tid)
 	}
 	return vm.mapNextVideoAnnotations()
 }
