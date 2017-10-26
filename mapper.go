@@ -81,7 +81,7 @@ func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{
 		if !ok {
 			logger.WithTransactionID(vm.tid).
 				WithUUID(videoUUID).
-				Errorf("Next video predicate id is not known:", nextAnnPredicate)
+				Errorf("Next video predicate id is not known: %s", nextAnnPredicate)
 			continue
 		}
 
