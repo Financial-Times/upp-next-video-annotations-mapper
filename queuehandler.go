@@ -75,7 +75,7 @@ func (h *queueHandler) queueConsume(m consumer.Message) {
 func (h *queueHandler) mapNextVideoAnnotationsMessage(vm *videoMapper) ([]byte, string, error) {
 	logger.WithTransactionID(vm.tid).
 		WithFields(map[string]interface{}{"queue_name": h.consumerConfig.Queue, "queue_topic": h.consumerConfig.Topic}).
-		Warnf("Start mapping next video message.")
+		Info("Start mapping next video message.")
 
 	if err := json.Unmarshal([]byte(vm.strContent), &vm.unmarshalled); err != nil {
 		return nil, "", fmt.Errorf("Video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON with tid: %s.", err.Error(), vm.tid)
