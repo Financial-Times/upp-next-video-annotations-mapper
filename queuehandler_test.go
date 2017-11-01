@@ -1,16 +1,13 @@
 package main
 
 import (
+	"io/ioutil"
+	"testing"
+
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"testing"
 )
-
-func init() {
-	logger = newAppLogger("test")
-}
 
 type mockMessageProducer struct {
 	message    string

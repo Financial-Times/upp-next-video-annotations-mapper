@@ -1,14 +1,16 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/Financial-Times/go-logger"
+	"github.com/stretchr/testify/assert"
 )
 
 const videoUUID = "0279e98c-fb6b-4aa0-adfc-8515a4c24668"
 
 func init() {
-	logger = newAppLogger("test")
+	logger.InitDefaultLogger("video-annotations-mapper")
 }
 
 func TestAnnotationsCreation(t *testing.T) {

@@ -4,11 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"net/http"
+	"net/http/httptest"
+
 	"github.com/Financial-Times/message-queue-go-producer/producer"
 	"github.com/Financial-Times/message-queue-gonsumer/consumer"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
 )
 
 func initializeHealthCheck(isProducerConnectionHealthy bool, isConsumerConnectionHealthy bool) *HealthCheck {

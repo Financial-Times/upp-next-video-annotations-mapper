@@ -1,16 +1,18 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/Financial-Times/go-logger"
+	"github.com/stretchr/testify/assert"
 )
 
 func init() {
-	logger = newAppLogger("test")
+	logger.InitDefaultLogger("video-annotations-mapper")
 }
 
 func TestMapRequest(t *testing.T) {
