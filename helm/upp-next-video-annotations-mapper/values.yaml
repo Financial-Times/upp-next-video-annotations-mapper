@@ -9,8 +9,10 @@ image:
   repository: coco/upp-next-video-annotations-mapper
   pullPolicy: IfNotPresent
 resources:
+  requests:
+    memory: 70Mi
   limits:
-    memory: 256Mi
+    memory: 128Mi
 env:
   APP_NAME: ""
   APP_SYSTEM_CODE: ""
