@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/message-queue-go-producer/producer"
@@ -29,12 +30,17 @@ func NewHealthCheck(p producer.MessageProducer, c consumer.MessageConsumer, appN
 
 func (h *HealthCheck) Health() func(w http.ResponseWriter, r *http.Request) {
 	checks := []fthealth.Check{h.readQueueCheck(), h.writeQueueCheck()}
-	hc := fthealth.HealthCheck{
-		SystemCode:  h.appSystemCode,
-		Name:        h.appName,
-		Description: serviceDescription,
-		Checks:      checks,
+
+	hc := fthealth.TimedHealthCheck{
+		HealthCheck: fthealth.HealthCheck{
+			SystemCode:  h.appSystemCode,
+			Name:        h.appName,
+			Description: serviceDescription,
+			Checks:      checks,
+		},
+		Timeout: 10 * time.Second,
 	}
+
 	return fthealth.Handler(hc)
 }
 
