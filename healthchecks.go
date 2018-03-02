@@ -48,7 +48,7 @@ func (h *HealthCheck) readQueueCheck() fthealth.Check {
 	return fthealth.Check{
 		ID:               "read-message-queue-proxy-reachable",
 		Name:             "Read Message Queue Proxy Reachable",
-		Severity:         1,
+		Severity:         2,
 		BusinessImpact:   "Annotations from published Next videos will not be created, clients will not see them within content.",
 		TechnicalSummary: "Read message queue proxy is not reachable/healthy",
 		PanicGuide:       h.panicGuide,
@@ -60,7 +60,7 @@ func (h *HealthCheck) writeQueueCheck() fthealth.Check {
 	return fthealth.Check{
 		ID:               "write-message-queue-proxy-reachable",
 		Name:             "Write Message Queue Proxy Reachable",
-		Severity:         1,
+		Severity:         2,
 		BusinessImpact:   "Annotations from published Next videos will not be created, clients will not see them within content.",
 		TechnicalSummary: "Write message queue proxy is not reachable/healthy",
 		PanicGuide:       h.panicGuide,
