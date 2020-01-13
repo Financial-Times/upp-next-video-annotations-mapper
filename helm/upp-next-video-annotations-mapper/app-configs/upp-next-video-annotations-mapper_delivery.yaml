@@ -6,7 +6,7 @@ env:
   APP_NAME: "Next Video Annotations Mapper"
   APP_SYSTEM_CODE: up-nvam
   APP_PORT: 8080
-  PANIC_GUIDE: https://dewey.ft.com/up-nvam.html
+  PANIC_GUIDE: https://runbooks.in.ft.com/up-nvam
   Q_GROUP: videoAnnotationsMapper
   Q_READ_TOPIC: NativeCmsMetadataPublicationEvents
   Q_WRITE_TOPIC: ConceptAnnotations
