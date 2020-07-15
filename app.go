@@ -55,7 +55,7 @@ func main() {
 	})
 	panicGuide := app.String(cli.StringOpt{
 		Name:   "panic-guide",
-		Value:  "https://dewey.ft.com/up-nvam.html",
+		Value:  "https://runbooks.in.ft.com/up-nvam",
 		Desc:   "Path to panic guide",
 		EnvVar: "PANIC_GUIDE",
 	})
