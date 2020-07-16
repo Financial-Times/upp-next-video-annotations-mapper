@@ -61,8 +61,7 @@ No
 
 ## Dependencies
 
-- upp-prod-delivery-eu
-- upp-prod-delivery-us
+- upp-kafka
 
 ## Failover Architecture Type
 
