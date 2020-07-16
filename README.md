@@ -11,11 +11,9 @@ used for transformation, resulting content being put back to Kafka(-bridge) on C
 In order to install, execute the following steps:
 
 `
-go get -u github.com/kardianos/govendor
-go get -u github.com/Financial-Times/upp-next-video-annotations-mapper
+go get github.com/Financial-Times/upp-next-video-annotations-mapper
 cd $GOPATH/src/github.com/Financial-Times/upp-next-video-annotations-mapper
-govendor sync
-go build .
+go install
 `
 
 ## Running
@@ -23,14 +21,12 @@ go build .
 Locally with default configuration:
 
 ```
-go install
 $GOPATH/bin/upp-next-video-annotations-mapper
 ```
 
 Locally with properties set:
 
 ```
-go install
 $GOPATH/bin/upp-next-video-annotations-mapper \
 --app_port "8080" \
 --q_addr "http://localhost:8080" \

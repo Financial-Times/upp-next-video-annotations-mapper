@@ -1,3 +1,0 @@
-Switched from `godep` to `govendor` since this is the tool we decided to widely use in FT/UPP.
-
-See more details on how to build/run here: https://github.com/kardianos/govendor, or just follow the steps from the [Readme](https://github.com/Financial-Times/upp-next-video-annotations-mapper/blob/master/README.md).

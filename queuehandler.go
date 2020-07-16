@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Financial-Times/go-logger"
+	logger "github.com/Financial-Times/go-logger"
+	logger2 "github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/message-queue-go-producer/producer"
-	"github.com/Financial-Times/message-queue-gonsumer/consumer"
-	"github.com/satori/go.uuid"
+	consumer "github.com/Financial-Times/message-queue-gonsumer"
+	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -32,7 +33,9 @@ type queueHandler struct {
 func (h *queueHandler) init() {
 	h.messageProducer = producer.NewMessageProducer(h.producerConfig)
 
-	h.messageConsumer = consumer.NewConsumer(h.consumerConfig, h.queueConsume, h.httpCl)
+	logConf := logger2.KeyNamesConfig{KeyTime: "@time"}
+	l := logger2.NewUPPLogger("upp-next-video-annotations-mapper", "WARN", logConf)
+	h.messageConsumer = consumer.NewConsumer(h.consumerConfig, h.queueConsume, h.httpCl, l)
 }
 
 func (h *queueHandler) queueConsume(m consumer.Message) {
