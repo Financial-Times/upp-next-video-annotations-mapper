@@ -1,8 +1,4 @@
-{{- if .Values.eksCluster }}
 apiVersion: apps/v1
-{{- else }}
-apiVersion: extensions/v1beta1
-{{- end }}
 kind: Deployment
 metadata:
   name: {{ .Values.service.name }}
@@ -72,4 +68,3 @@ spec:
           periodSeconds: 30
         resources:
 {{ toYaml .Values.resources | indent 12 }}
-

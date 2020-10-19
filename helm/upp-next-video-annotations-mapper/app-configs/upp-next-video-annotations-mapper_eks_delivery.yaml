@@ -2,7 +2,6 @@
 replicaCount: 2
 service:
   name: upp-next-video-annotations-mapper
-eksCluster: true
 env:
   APP_NAME: "Next Video Annotations Mapper"
   APP_SYSTEM_CODE: up-nvam
