@@ -10,13 +10,11 @@ used for transformation, resulting content being put back to Kafka(-bridge) on C
 
 In order to install, execute the following steps:
 
-`
-go get -u github.com/kardianos/govendor
+```shell script
 go get -u github.com/Financial-Times/upp-next-video-annotations-mapper
 cd $GOPATH/src/github.com/Financial-Times/upp-next-video-annotations-mapper
-govendor sync
-go build .
-`
+go build -mod=readonly .
+```
 
 ## Running
 
