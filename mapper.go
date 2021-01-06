@@ -29,19 +29,17 @@ type tag struct {
 }
 
 func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
-	var videoUUID string
-	var err error
+	var uuidField string
 
 	if vm.isDeleteEvent() {
-		videoUUID, err = getRequiredStringField(videoUUIDField, vm.unmarshalled)
-		if err != nil {
-			return nil, "", err
-		}
+		uuidField = videoUUIDField
 	} else {
-		videoUUID, err = getRequiredStringField(videoIDField, vm.unmarshalled)
-		if err != nil {
-			return nil, "", err
-		}
+		uuidField = videoIDField
+	}
+
+	videoUUID, err := getRequiredStringField(uuidField, vm.unmarshalled)
+	if err != nil {
+		return nil, "", err
 	}
 
 	nextAnnsArray, err := getObjectsArrayField(annotationsField, vm.unmarshalled, videoUUID, vm)
