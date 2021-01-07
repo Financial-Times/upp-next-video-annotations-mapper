@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	videoUUIDField           = "id"
+	videoIDField             = "id"
+	videoUUIDField           = "uuid"
 	annotationsField         = "annotations"
 	annotationIDField        = "id"
 	annotationPredicateField = "predicate"
@@ -28,7 +29,15 @@ type tag struct {
 }
 
 func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
-	videoUUID, err := getRequiredStringField(videoUUIDField, vm.unmarshalled)
+	var uuidField string
+
+	if vm.isDeleteEvent() {
+		uuidField = videoUUIDField
+	} else {
+		uuidField = videoIDField
+	}
+
+	videoUUID, err := getRequiredStringField(uuidField, vm.unmarshalled)
 	if err != nil {
 		return nil, "", err
 	}
