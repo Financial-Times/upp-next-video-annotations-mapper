@@ -11,7 +11,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/context v1.1.1 // indirect
-	github.com/gorilla/handlers v0.0.0-20161206055144-3a5767ca75ec
+	github.com/gorilla/handlers v1.3.0
 	github.com/gorilla/mux v1.3.1-0.20170228224354-599cba5e7b61
 	github.com/hashicorp/go-version v0.0.0-20170202080759-03c5bf6be031 // indirect
 	github.com/jawher/mow.cli v0.0.0-20170220225154-d3ffbc2f98b8
