@@ -3,18 +3,12 @@ package main
 import (
 	"testing"
 
-	"github.com/Financial-Times/go-logger"
 	"github.com/stretchr/testify/assert"
 )
 
 const videoUUID = "0279e98c-fb6b-4aa0-adfc-8515a4c24668"
 
-func init() {
-	logger.InitDefaultLogger("video-annotations-mapper")
-}
-
 func TestAnnotationsCreation(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		tags       []tag
 		expectedCs ConceptAnnotation
@@ -38,7 +32,7 @@ func TestAnnotationsCreation(t *testing.T) {
 	context := annsContext{videoUUID: videoUUID}
 	for _, test := range tests {
 		actualConceptAnnotations := createAnnotations(test.tags, context)
-		assert.Equal(test.expectedCs, actualConceptAnnotations, "Wrong conceptAnnotation. Input anns: [%v]", test.tags)
+		assert.Equal(t, test.expectedCs, actualConceptAnnotations, "Wrong conceptAnnotation. Input anns: [%v]", test.tags)
 	}
 }
 

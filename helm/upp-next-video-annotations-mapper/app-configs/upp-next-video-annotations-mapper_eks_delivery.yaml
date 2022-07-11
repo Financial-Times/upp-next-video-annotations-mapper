@@ -1,5 +1,5 @@
 # Values used for the deployed application.
-replicaCount: 2
+replicaCount: 1
 service:
   name: upp-next-video-annotations-mapper
 env:
@@ -7,6 +7,8 @@ env:
   APP_SYSTEM_CODE: up-nvam
   APP_PORT: 8080
   PANIC_GUIDE: https://dewey.ft.com/up-nvam.html
-  Q_GROUP: videoAnnotationsMapper
+  Q_GROUP: upp-next-video-annotations-mapper
   Q_READ_TOPIC: NativeCmsMetadataPublicationEvents
   Q_WRITE_TOPIC: ConceptAnnotations
+  KAFKA_LAG_TOLERANCE: 120
+  LOG_LEVEL: "INFO"

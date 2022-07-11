@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/go-logger/v2"
 )
 
 const (
@@ -21,6 +21,7 @@ type videoMapper struct {
 	strContent   string
 	tid          string
 	unmarshalled map[string]interface{}
+	log          *logger.UPPLogger
 }
 
 type tag struct {
@@ -50,7 +51,7 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	annotations := vm.retrieveAnnotations(nextAnnsArray, videoUUID)
 
 	if len(annotations) == 0 {
-		logger.WithTransactionID(vm.tid).
+		vm.log.WithTransactionID(vm.tid).
 			WithUUID(videoUUID).
 			Info("No annotation could be retrieved for Next video")
 	}
@@ -70,7 +71,7 @@ func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{
 	for _, ann := range nextAnnsArray {
 		thingID, err := getRequiredStringField(annotationIDField, ann)
 		if err != nil {
-			logger.WithTransactionID(vm.tid).
+			vm.log.WithTransactionID(vm.tid).
 				WithUUID(videoUUID).
 				WithError(err).
 				Error("Cannot extract concept id from annotation field")
@@ -79,7 +80,7 @@ func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{
 
 		nextAnnPredicate, err := getRequiredStringField(annotationPredicateField, ann)
 		if err != nil {
-			logger.WithTransactionID(vm.tid).
+			vm.log.WithTransactionID(vm.tid).
 				WithUUID(videoUUID).
 				WithError(err).
 				Error("Cannot extract predicate from annotation field")
@@ -88,7 +89,7 @@ func (vm *videoMapper) retrieveAnnotations(nextAnnsArray []map[string]interface{
 
 		predicate, ok := getPredicateShortForm(nextAnnPredicate)
 		if !ok {
-			logger.WithTransactionID(vm.tid).
+			vm.log.WithTransactionID(vm.tid).
 				WithUUID(videoUUID).
 				Errorf("Next video predicate id is not known: %s", nextAnnPredicate)
 			continue
@@ -121,7 +122,7 @@ func getObjectsArrayField(key string, obj map[string]interface{}, videoUUID stri
 	var result = make([]map[string]interface{}, 0)
 	objArrayI, ok := obj[key]
 	if !ok {
-		logger.WithTransactionID(vm.tid).
+		vm.log.WithTransactionID(vm.tid).
 			WithUUID(videoUUID).
 			Info(nullFieldError(key).Error())
 		return result, nil
@@ -147,8 +148,8 @@ func nullFieldError(fieldKey string) error {
 	return fmt.Errorf("[%s] field of native Next video JSON is missing or is null", fieldKey)
 }
 
-func wrongFieldTypeError(expectedType, fieldKey string, value interface{}) error {
-	return fmt.Errorf("[%s] field of native Next video JSON is not of type %s.", fieldKey, expectedType)
+func wrongFieldTypeError(expectedType, fieldKey string, _ interface{}) error {
+	return fmt.Errorf("[%s] field of native Next video JSON is not of type %s", fieldKey, expectedType)
 }
 
 func (vm *videoMapper) isDeleteEvent() bool {
