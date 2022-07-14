@@ -31,12 +31,10 @@ Locally with properties set:
 go install
 $GOPATH/bin/upp-next-video-annotations-mapper \
 --app_port "8080" \
---q_addr "http://localhost:8080" \
---q_group "videoAnnotationsMapper" \
+--kafka_addr "localhost:2181" \
+--q_group "upp-next-video-annotations-mapper" \
 --q_read_topic "NativeCmsPublicationEvents" \
---q_read_queue "kafka" \
 --q_write_topic "V1ConceptAnnotations" \
---q_write_queue "kafka" \
 ```
 
 With Docker:
@@ -48,12 +46,10 @@ With Docker:
 ```
 docker run -ti
 --env "APP_PORT=8080" \
---env "Q_ADDR=http://localhost:8080" \
---env "Q_GROUP=videoAnnotationsMapper" \
+--env "KAFKA_ADDR=localhost:2181" \
+--env "Q_GROUP=upp-next-video-annotations-mapper" \
 --env "Q_READ_TOPIC=NativeCmsPublicationEvents" \
---env "Q_READ_QUEUE=kafka" \
 --env "Q_WRITE_TOPIC=V1ConceptAnnotations" \
---env "Q_WRITE_QUEUE=kafka" \
 coco/upp-next-video-annotations-mapper
 ```
 

@@ -5,14 +5,14 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var testMap = make(map[string]interface{})
 
 func init() {
-	logger.InitDefaultLogger("video-annotations-mapper")
 	testMap["string"] = "value1"
 	testMap["nullstring"] = nil
 	testMap["bool"] = true
@@ -27,9 +27,14 @@ func init() {
 	testMap["emptyObjArray"] = make([]interface{}, 0)
 }
 
+func getLogger() *logger.UPPLogger {
+	return logger.NewUPPLogger("video-annotations-mapper", "Debug")
+}
+
 func TestBuildAnnotations(t *testing.T) {
-	assert := assert.New(t)
-	vm := videoMapper{}
+	vm := videoMapper{
+		log: getLogger(),
+	}
 	tests := []struct {
 		nextAnns     []map[string]interface{}
 		expectedAnns []tag
@@ -60,12 +65,11 @@ func TestBuildAnnotations(t *testing.T) {
 	}
 	for _, test := range tests {
 		anns := vm.retrieveAnnotations(test.nextAnns, "")
-		assert.Equal(test.expectedAnns, anns, "Annotations are wrong. Test input: [%v]", test.nextAnns)
+		assert.Equal(t, test.expectedAnns, anns, "Annotations are wrong. Test input: [%v]", test.nextAnns)
 	}
 }
 
 func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		fileName          string
 		expectedContent   string
@@ -85,23 +89,23 @@ func TestMapNextVideoAnnotationsHappyFlow(t *testing.T) {
 	for _, test := range tests {
 		nextVideo, err := readContent(test.fileName)
 		if err != nil {
-			assert.Fail(err.Error())
+			assert.Fail(t, err.Error())
 		}
 		vm := videoMapper{
 			sc:           serviceConfig{},
 			unmarshalled: nextVideo,
+			log:          getLogger(),
 		}
 
 		marshalledContent, videoUUID, err := vm.mapNextVideoAnnotations()
 
-		assert.Equal(test.expectedContent, string(marshalledContent), "Marshalled content wrong. Input JSON: %s", test.fileName)
-		assert.Equal(test.expectedVideoUUID, videoUUID, "Video UUID wrong. Input JSON: %s", test.fileName)
-		assert.Equal(test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
+		assert.Equal(t, test.expectedContent, string(marshalledContent), "Marshalled content wrong. Input JSON: %s", test.fileName)
+		assert.Equal(t, test.expectedVideoUUID, videoUUID, "Video UUID wrong. Input JSON: %s", test.fileName)
+		assert.Equal(t, test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
 	}
 }
 
 func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		fileName          string
 		expectedErrStatus bool
@@ -126,17 +130,17 @@ func TestMapNextVideoAnnotationsMissingFields(t *testing.T) {
 
 	for _, test := range tests {
 		nextVideo, err := readContent(test.fileName)
-		if err != nil {
-			assert.Fail(err.Error())
+		require.NoError(t, err)
+		vm := videoMapper{
+			unmarshalled: nextVideo,
+			log:          getLogger(),
 		}
-		vm := videoMapper{unmarshalled: nextVideo}
 		_, _, err = vm.mapNextVideoAnnotations()
-		assert.Equal(test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
+		assert.Equal(t, test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
 	}
 }
 
 func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		fileName          string
 		expectedContent   ConceptAnnotation
@@ -151,21 +155,21 @@ func TestMapNextVideoAnnotationsDeleteEvent(t *testing.T) {
 
 	for _, test := range tests {
 		nextVideo, err := readContent(test.fileName)
-		if err != nil {
-			assert.Fail(err.Error())
+		require.NoError(t, err)
+		vm := videoMapper{
+			unmarshalled: nextVideo,
+			log:          getLogger(),
 		}
-		vm := videoMapper{unmarshalled: nextVideo}
 		marshalledContent, _, err := vm.mapNextVideoAnnotations()
 		var concept ConceptAnnotation
 		err = json.Unmarshal(marshalledContent, &concept)
-		assert.Nil(err)
-		assert.Equal(test.expectedContent, concept, "Marshalled content differs from expected. Input JSON: %s", test.fileName)
-		assert.Equal(test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
+		assert.Nil(t, err)
+		assert.Equal(t, test.expectedContent, concept, "Marshalled content differs from expected. Input JSON: %s", test.fileName)
+		assert.Equal(t, test.expectedErrStatus, err != nil, "Error status wrong. Input JSON: %s", test.fileName)
 	}
 }
 
 func TestGetRequiredStringField(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		key           string
 		expectedValue interface{}
@@ -195,14 +199,15 @@ func TestGetRequiredStringField(t *testing.T) {
 
 	for _, test := range tests {
 		result, err := getRequiredStringField(test.key, testMap)
-		assert.Equal(test.expectedValue, result, "Value is wrong. Map key: %s", test.key)
-		assert.Equal(test.expectedIsErr, err != nil, "Error status is wrong. Map key: %s", test.key)
+		assert.Equal(t, test.expectedValue, result, "Value is wrong. Map key: %s", test.key)
+		assert.Equal(t, test.expectedIsErr, err != nil, "Error status is wrong. Map key: %s", test.key)
 	}
 }
 
 func TestGetObjectsArrayField(t *testing.T) {
-	assert := assert.New(t)
-	vm := videoMapper{}
+	vm := videoMapper{
+		log: getLogger(),
+	}
 	var objArray = make([]map[string]interface{}, 0)
 	var objValue = make(map[string]interface{})
 	objValue["field1"] = "test"
@@ -237,8 +242,8 @@ func TestGetObjectsArrayField(t *testing.T) {
 
 	for _, test := range tests {
 		result, err := getObjectsArrayField(test.key, testMap, "videoUUID", &vm)
-		assert.Equal(test.expectedValue, result, "Value is wrong. Map key: %s", test.key)
-		assert.Equal(test.expectedIsErr, err != nil, "Error status is wrong. Map key: %s", test.key)
+		assert.Equal(t, test.expectedValue, result, "Value is wrong. Map key: %s", test.key)
+		assert.Equal(t, test.expectedIsErr, err != nil, "Error status is wrong. Map key: %s", test.key)
 	}
 }
 

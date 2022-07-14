@@ -7,20 +7,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Financial-Times/go-logger"
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/stretchr/testify/assert"
 )
 
-func init() {
-	logger.InitDefaultLogger("video-annotations-mapper")
-}
-
 func TestMapRequest(t *testing.T) {
-	h := serviceHandler{
-		sc: serviceConfig{},
-	}
+	h := newServiceHandler(serviceConfig{}, logger.NewUPPLogger("upp-next-video-annotations-test-logger", "debug"))
 
-	assert := assert.New(t)
 	tests := []struct {
 		fileName           string
 		expectedContent    string
@@ -56,12 +49,12 @@ func TestMapRequest(t *testing.T) {
 
 		switch {
 		case err != nil:
-			assert.Fail(err.Error())
+			assert.NoError(t, err)
 		case test.expectedHTTPStatus != http.StatusOK:
-			assert.Equal(test.expectedHTTPStatus, http.StatusBadRequest, "HTTP status wrong. Input JSON: %s", test.fileName)
+			assert.Equal(t, test.expectedHTTPStatus, http.StatusBadRequest, "HTTP status wrong. Input JSON: %s", test.fileName)
 		default:
-			assert.Equal(test.expectedHTTPStatus, http.StatusOK, "HTTP status wrong. Input JSON: %s", test.fileName)
-			assert.Equal(test.expectedContent, string(body), "Marshalled content wrong. Input JSON: %s", test.fileName)
+			assert.Equal(t, test.expectedHTTPStatus, http.StatusOK, "HTTP status wrong. Input JSON: %s", test.fileName)
+			assert.Equal(t, test.expectedContent, string(body), "Marshalled content wrong. Input JSON: %s", test.fileName)
 		}
 	}
 }
@@ -69,7 +62,7 @@ func TestMapRequest(t *testing.T) {
 func getReader(fileName string, t *testing.T) *os.File {
 	file, err := os.Open("test-resources/" + fileName)
 	if err != nil {
-		assert.Fail(t, err.Error())
+		assert.NoError(t, err)
 		return nil
 	}
 

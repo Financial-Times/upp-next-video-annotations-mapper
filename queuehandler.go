@@ -3,12 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/Financial-Times/go-logger"
-	"github.com/Financial-Times/message-queue-go-producer/producer"
-	"github.com/Financial-Times/message-queue-gonsumer/consumer"
+	"github.com/Financial-Times/go-logger/v2"
+	"github.com/Financial-Times/kafka-client-go/v3"
 	"github.com/google/uuid"
 )
 
@@ -20,33 +18,35 @@ const (
 	contentType      = "Annotations"
 )
 
+type messageProducer interface {
+	SendMessage(kafka.FTMessage) error
+}
+
 type queueHandler struct {
 	sc              serviceConfig
-	httpCl          *http.Client
-	consumerConfig  consumer.QueueConfig
-	producerConfig  producer.MessageProducerConfig
-	messageConsumer consumer.MessageConsumer
-	messageProducer producer.MessageProducer
+	messageProducer messageProducer
+	log             *logger.UPPLogger
 }
 
-func (h *queueHandler) init() {
-	h.messageProducer = producer.NewMessageProducer(h.producerConfig)
-
-	h.messageConsumer = consumer.NewConsumer(h.consumerConfig, h.queueConsume, h.httpCl)
+func newQueueHandler(sc serviceConfig, messageProducer messageProducer, log *logger.UPPLogger) *queueHandler {
+	return &queueHandler{
+		sc:              sc,
+		messageProducer: messageProducer,
+		log:             log,
+	}
 }
 
-func (h *queueHandler) queueConsume(m consumer.Message) {
+func (h *queueHandler) queueConsume(m kafka.FTMessage) {
 	if m.Headers["Origin-System-Id"] != nextVideoOrigin {
-		logger.WithField("queue_topic", h.consumerConfig.Topic).Infof("Ignoring message with different Origin-System-Id: %v", m.Headers["Origin-System-Id"])
+		h.log.Infof("Ignoring message with different Origin-System-Id: %v", m.Headers["Origin-System-Id"])
 		return
 	}
-	vm := videoMapper{sc: h.sc, strContent: m.Body, tid: m.Headers["X-Request-Id"]}
+	vm := videoMapper{sc: h.sc, strContent: m.Body, tid: m.Headers["X-Request-Id"], log: h.log}
 	marshalledEvent, videoUUID, err := h.mapNextVideoAnnotationsMessage(&vm)
 	if err != nil {
-		logger.WithMonitoringEvent(mapEvent, vm.tid, contentType).
+		h.log.WithMonitoringEvent(mapEvent, vm.tid, contentType).
 			WithValidFlag(false).
 			WithUUID(videoUUID).
-			WithFields(map[string]interface{}{"queue_name": h.consumerConfig.Queue, "queue_topic": h.consumerConfig.Topic}).
 			WithError(err).
 			Warnf("Error mapping the message from queue")
 		return
@@ -54,31 +54,28 @@ func (h *queueHandler) queueConsume(m consumer.Message) {
 
 	headers := createHeader(m.Headers)
 	msgToSend := string(marshalledEvent)
-	err = h.messageProducer.SendMessage("", producer.Message{Headers: headers, Body: msgToSend})
+	err = h.messageProducer.SendMessage(kafka.FTMessage{Headers: headers, Body: msgToSend})
 	if err != nil {
-		logger.WithMonitoringEvent(mapEvent, vm.tid, contentType).
+		h.log.WithMonitoringEvent(mapEvent, vm.tid, contentType).
 			WithValidFlag(true).
 			WithUUID(videoUUID).
-			WithFields(map[string]interface{}{"queue_name": h.consumerConfig.Queue, "queue_topic": h.consumerConfig.Topic}).
 			WithError(err).
 			Warnf("Error sending transformed message to queue")
 		return
 	}
 
-	logger.WithMonitoringEvent(mapEvent, vm.tid, contentType).
+	h.log.WithMonitoringEvent(mapEvent, vm.tid, contentType).
 		WithValidFlag(true).
 		WithUUID(videoUUID).
-		WithFields(map[string]interface{}{"queue_name": h.consumerConfig.Queue, "queue_topic": h.consumerConfig.Topic}).
 		Info("Mapped and sent.")
 }
 
 func (h *queueHandler) mapNextVideoAnnotationsMessage(vm *videoMapper) ([]byte, string, error) {
-	logger.WithTransactionID(vm.tid).
-		WithFields(map[string]interface{}{"queue_name": h.consumerConfig.Queue, "queue_topic": h.consumerConfig.Topic}).
+	h.log.WithTransactionID(vm.tid).
 		Info("Start mapping next video message.")
 
 	if err := json.Unmarshal([]byte(vm.strContent), &vm.unmarshalled); err != nil {
-		return nil, "", fmt.Errorf("Video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON with tid: %s.", err.Error(), vm.tid)
+		return nil, "", fmt.Errorf("video JSON from Next couldn't be unmarshalled: %v. Skipping invalid JSON with tid: %s", err, vm.tid)
 	}
 	if vm.tid == "" {
 		return nil, "", fmt.Errorf("X-Request-Id not found in kafka message headers. Skipping message with tid %s", vm.tid)

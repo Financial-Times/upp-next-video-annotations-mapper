@@ -4,8 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/Financial-Times/message-queue-go-producer/producer"
-	"github.com/Financial-Times/message-queue-gonsumer/consumer"
+	"github.com/Financial-Times/kafka-client-go/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +14,6 @@ type mockMessageProducer struct {
 }
 
 func TestQueueConsume(t *testing.T) {
-	assert := assert.New(t)
 	tests := []struct {
 		fileName        string
 		originSystem    string
@@ -75,17 +73,18 @@ func TestQueueConsume(t *testing.T) {
 		h := queueHandler{
 			sc:              serviceConfig{},
 			messageProducer: msgProducer,
+			log:             getLogger(),
 		}
 
-		msg := consumer.Message{
+		msg := kafka.FTMessage{
 			Headers: createHeaders(test.originSystem, test.tid),
 			Body:    string(getBytes(test.fileName, t)),
 		}
 		h.queueConsume(msg)
 
-		assert.Equal(test.expectedMsgSent, mockMsgProducer.sendCalled,
+		assert.Equal(t, test.expectedMsgSent, mockMsgProducer.sendCalled,
 			"Message sending check is wrong. Input JSON file: %s, Origin-System-Id: %s, X-Request-Id: %s", test.fileName, test.originSystem, test.tid)
-		assert.Equal(test.expectedContent, mockMsgProducer.message,
+		assert.Equal(t, test.expectedContent, mockMsgProducer.message,
 			"Marshalled content wrong. Input JSON file: %s, Origin-System-Id: %s, X-Request-Id: %s", test.fileName, test.originSystem, test.tid)
 	}
 }
@@ -97,7 +96,7 @@ func createHeaders(originSystem string, requestID string) map[string]string {
 	return result
 }
 
-func (mock *mockMessageProducer) SendMessage(uuid string, message producer.Message) error {
+func (mock *mockMessageProducer) SendMessage(message kafka.FTMessage) error {
 	mock.message = message.Body
 	mock.sendCalled = true
 	return nil

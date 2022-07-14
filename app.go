@@ -4,23 +4,18 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
-	"github.com/Financial-Times/go-logger"
-	"github.com/Financial-Times/message-queue-go-producer/producer"
-	"github.com/Financial-Times/message-queue-gonsumer/consumer"
+	"github.com/Financial-Times/go-logger/v2"
+	"github.com/Financial-Times/kafka-client-go/v3"
 	"github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/jawher/mow.cli"
+	cli "github.com/jawher/mow.cli"
 )
 
 const serviceDescription = "Gets the Next video content from queue, transforms annotations to an internal representation and puts a new created annotation content to queue."
-
-var timeout = 10 * time.Second
-var httpCl = &http.Client{Timeout: timeout}
 
 type serviceConfig struct {
 	serviceName string
@@ -59,11 +54,11 @@ func main() {
 		Desc:   "Path to panic guide",
 		EnvVar: "PANIC_GUIDE",
 	})
-	addresses := app.Strings(cli.StringsOpt{
-		Name:   "queue-addresses",
-		Value:  []string{"http://localhost:8080"},
+	kafkaAddress := app.String(cli.StringOpt{
+		Name:   "queue-kafkaAddress",
+		Value:  "",
 		Desc:   "Addresses to connect to the queue (hostnames).",
-		EnvVar: "Q_ADDR",
+		EnvVar: "KAFKA_ADDR",
 	})
 	group := app.String(cli.StringOpt{
 		Name:   "group",
@@ -74,71 +69,82 @@ func main() {
 	readTopic := app.String(cli.StringOpt{
 		Name:   "read-topic",
 		Value:  "NativeCmsPublicationEvents",
-		Desc:   "The topic to read the meassages from.",
+		Desc:   "The topic to read the messages from.",
 		EnvVar: "Q_READ_TOPIC",
-	})
-	readQueue := app.String(cli.StringOpt{
-		Name:   "read-queue",
-		Value:  "kafka",
-		Desc:   "The queue to read the meassages from.",
-		EnvVar: "Q_READ_QUEUE",
 	})
 	writeTopic := app.String(cli.StringOpt{
 		Name:   "write-topic",
 		Value:  "V1ConceptAnnotations",
-		Desc:   "The topic to write the meassages to.",
+		Desc:   "The topic to write the messages to.",
 		EnvVar: "Q_WRITE_TOPIC",
 	})
-	writeQueue := app.String(cli.StringOpt{
-		Name:   "write-queue",
-		Value:  "kafka",
-		Desc:   "The queue to write the meassages to.",
-		EnvVar: "Q_WRITE_QUEUE",
+	logLevel := app.String(cli.StringOpt{
+		Name:   "logLevel",
+		Value:  "INFO",
+		Desc:   "Logging level (DEBUG, INFO, WARN, ERROR)",
+		EnvVar: "LOG_LEVEL",
+	})
+	consumerLagTolerance := app.Int(cli.IntOpt{
+		Name:   "consumerLagTolerance",
+		Value:  120,
+		Desc:   "Kafka lag tolerance",
+		EnvVar: "KAFKA_LAG_TOLERANCE",
 	})
 
-	logger.InitDefaultLogger(*serviceName)
-	logger.Infof("[Startup] %s is starting ", *serviceName)
+	log := logger.NewUPPLogger(*serviceName, *logLevel)
+
+	log.Infof("[Startup] %s is starting ", *serviceName)
 
 	app.Action = func() {
-
-		if len(*addresses) == 0 {
-			logger.Info("No queue address provided. Quitting...")
+		if *kafkaAddress == "" {
+			log.Info("No queue kafkaAddress provided. Quitting...")
 			cli.Exit(1)
 		}
+
+		producerConfig := kafka.ProducerConfig{
+			BrokersConnectionString: *kafkaAddress,
+			Topic:                   *writeTopic,
+			ConnectionRetryInterval: time.Minute,
+		}
+		producer := kafka.NewProducer(producerConfig, log)
+
 		sc := serviceConfig{
 			serviceName: *serviceName,
 			appPort:     *appPort,
 		}
-		consumerConfig := consumer.QueueConfig{
-			Addrs:                *addresses,
-			Group:                *group,
-			Topic:                *readTopic,
-			Queue:                *readQueue,
-			ConcurrentProcessing: false,
-			AutoCommitEnable:     true,
+		annMapper := newQueueHandler(sc, producer, log)
+
+		consumerConfig := kafka.ConsumerConfig{
+			BrokersConnectionString: *kafkaAddress,
+			ConsumerGroup:           *group,
+			ConnectionRetryInterval: time.Minute,
 		}
-		producerConfig := producer.MessageProducerConfig{
-			Addr:  (*addresses)[0],
-			Topic: *writeTopic,
-			Queue: *writeQueue,
+		topics := []*kafka.Topic{
+			kafka.NewTopic(*readTopic, kafka.WithLagTolerance(int64(*consumerLagTolerance))),
 		}
+		consumer := kafka.NewConsumer(consumerConfig, topics, log)
+		go consumer.Start(annMapper.queueConsume)
+		defer func(consumer *kafka.Consumer) {
+			err := consumer.Close()
+			if err != nil {
+				log.WithError(err).Error("Consumer could not stop")
+			}
+		}(consumer)
 
-		annMapper := queueHandler{sc: sc, httpCl: httpCl, consumerConfig: consumerConfig, producerConfig: producerConfig}
-		annMapper.init()
+		sh := newServiceHandler(sc, log)
+		hc := NewHealthCheck(producer, consumer, *appName, *systemCode, *panicGuide)
+		go listen(sh, hc, log)
 
-		sh := serviceHandler{sc}
-		hc := NewHealthCheck(annMapper.messageProducer, annMapper.messageConsumer, *appName, *systemCode, *panicGuide)
-		go listen(sc, sh, hc)
-
-		consumeUntilSigterm(annMapper.messageConsumer, consumerConfig)
+		log.Infof("[Shutdown] %s is shutting down", *appName)
+		waitForSignal()
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		logger.Errorf("%v", err)
+		log.WithError(err).Errorf("%s failed to start", *appName)
 	}
 }
 
-func listen(sc serviceConfig, sh serviceHandler, hc *HealthCheck) {
+func listen(sh *serviceHandler, hc *HealthCheck, log *logger.UPPLogger) {
 	r := mux.NewRouter()
 	r.Path("/map").Handler(handlers.MethodHandler{"POST": http.HandlerFunc(sh.mapRequest)})
 	r.Path(httphandlers.BuildInfoPath).HandlerFunc(httphandlers.BuildInfoHandler)
@@ -146,29 +152,18 @@ func listen(sc serviceConfig, sh serviceHandler, hc *HealthCheck) {
 	r.Path("/__health").Handler(handlers.MethodHandler{"GET": http.HandlerFunc(hc.Health())})
 	r.Path(httphandlers.GTGPath).HandlerFunc(httphandlers.NewGoodToGoHandler(hc.GTG))
 
-	logger.WithFields(sc.asMap()).Info("Service started with configuration")
+	log.WithFields(sh.sc.asMap()).Info("Service started with configuration")
 
-	err := http.ListenAndServe(":"+sc.appPort, r)
+	err := http.ListenAndServe(":"+sh.sc.appPort, r)
 	if err != nil {
-		logger.Fatalf("Unable to start server: %v", err)
+		log.WithField("message", err).Info("Closing HTTP server")
 	}
 }
 
-func consumeUntilSigterm(messageConsumer consumer.MessageConsumer, config consumer.QueueConfig) {
-
-	logger.WithFields(map[string]interface{}{"event": "consume_queue", "queue_topic": config.Topic}).Info("Starting queue consumer")
-
-	var consumerWaitGroup sync.WaitGroup
-	consumerWaitGroup.Add(1)
-	go func() {
-		messageConsumer.Start()
-		consumerWaitGroup.Done()
-	}()
-	ch := make(chan os.Signal)
+func waitForSignal() {
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	<-ch
-	messageConsumer.Stop()
-	consumerWaitGroup.Wait()
 }
 
 func (sc serviceConfig) asMap() map[string]interface{} {
