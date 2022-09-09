@@ -42,7 +42,6 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-
 	nextAnnsArray, err := getObjectsArrayField(annotationsField, vm.unmarshalled, videoUUID, vm)
 	if err != nil {
 		return nil, videoUUID, err
