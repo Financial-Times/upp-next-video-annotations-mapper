@@ -39,10 +39,10 @@ func (vm *videoMapper) mapNextVideoAnnotations() ([]byte, string, error) {
 	}
 
 	videoUUID, err := getRequiredStringField(uuidField, vm.unmarshalled)
+	vm.log.WithField("uuidField", uuidField).WithField("videoUUID", videoUUID).Debug("TEST")
 	if err != nil {
 		return nil, "", err
 	}
-
 	nextAnnsArray, err := getObjectsArrayField(annotationsField, vm.unmarshalled, videoUUID, vm)
 	if err != nil {
 		return nil, videoUUID, err
