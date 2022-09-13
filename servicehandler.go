@@ -25,7 +25,7 @@ func (h serviceHandler) mapRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	tid := r.Header.Get("X-Request-Id")
 
-	vm := videoMapper{sc: h.sc, strContent: string(body), tid: tid}
+	vm := videoMapper{sc: h.sc, strContent: string(body), tid: tid, log: h.log}
 
 	mappedVideoBytes, _, err := h.mapNextVideoAnnotationsRequest(&vm)
 	if err != nil {
