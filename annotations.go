@@ -1,8 +1,6 @@
 package main
 
 const (
-	relevanceURI           = "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM"
-	confidenceURI          = "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM"
 	defaultConfidenceScore = 0.9
 	defaultRelevanceScore  = 0.9
 )
@@ -14,39 +12,10 @@ type ConceptAnnotation struct {
 }
 
 type annotation struct {
-	Thing      thing        `json:"thing"`
-	Provenance []provenance `json:"provenances,omitempty"`
-}
-
-type thing struct {
-	ID        string   `json:"id"`
-	PrefLabel string   `json:"prefLabel"`
-	Predicate string   `json:"predicate"`
-	Types     []string `json:"types"`
-}
-
-type provenance struct {
-	Scores []score `json:"scores"`
-}
-
-type score struct {
-	ScoringSystem string  `json:"scoringSystem"`
-	Value         float32 `json:"value"`
-}
-
-var provenances = []provenance{
-	{
-		[]score{
-			{
-				ScoringSystem: relevanceURI,
-				Value:         defaultRelevanceScore,
-			},
-			{
-				ScoringSystem: confidenceURI,
-				Value:         defaultConfidenceScore,
-			},
-		},
-	},
+	ID              string  `json:"id"`
+	Predicate       string  `json:"predicate"`
+	RelevanceScore  float64 `json:"relevanceScore,omitempty"`
+	ConfidenceScore float64 `json:"confidenceScore,omitempty"`
 }
 
 type annsContext struct {
@@ -64,11 +33,10 @@ func createAnnotations(nextAnns []tag, context annsContext) ConceptAnnotation {
 }
 
 func newAnnotation(nextAnn tag) annotation {
-	t := thing{
-		ID:        nextAnn.thingID,
-		Predicate: nextAnn.predicate,
-		Types:     []string{},
+	return annotation{
+		ID:              nextAnn.thingID,
+		Predicate:       nextAnn.predicate,
+		RelevanceScore:  defaultRelevanceScore,
+		ConfidenceScore: defaultConfidenceScore,
 	}
-
-	return annotation{Thing: t, Provenance: provenances}
 }
