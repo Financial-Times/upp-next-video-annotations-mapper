@@ -22,7 +22,7 @@ func TestMapRequest(t *testing.T) {
 		{
 			"next-video-input.json",
 			newStringConceptAnnotation(t, "e2290d14-7e80-4db8-a715-949da4de9a07",
-				[]annotation{newTestAnnotation("http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy")},
+				[]annotation{{"http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325", "isClassifiedBy", defaultRelevanceScore, defaultConfidenceScore}},
 			),
 			http.StatusOK,
 		},

@@ -114,15 +114,15 @@ body.json:
 	}],
 	"annotations": [{
 		"id": "http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740",
-		"predicate": "http://www.ft.com/ontology/classification/isClassifiedBy",
+		"predicate": "http://www.ft.com/ontology/classification/isClassifiedBy"
 	},
 	{
-		"id": "http://api.ft.com/things/b43f1a91-b805-3453-8c36-1d164c047ca2",
+		"id": "http://api.ft.com/things/b43f1a91-b805-3453-8c36-1d164c047ca2"
 		"predicate": "http://www.ft.com/ontology/annotation/majorMentions",
 	},
 	{
 		"id": "http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325",
-		"predicate": "http://www.ft.com/ontology/classification/isClassifiedBy",
+		"predicate": "http://www.ft.com/ontology/classification/isClassifiedBy"
 	}],
 	"encodings": [{
 		"mioId": 762380,
@@ -178,75 +178,27 @@ Return:
 Body:
 ```
 {
-  "uuid": "e2290d14-7e80-4db8-a715-949da4de9a07",
-  "annotations": [
-    {
-      "thing": {
-        "id": "http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740",
-        "prefLabel": "",
-        "predicate": "isClassifiedBy",
-        "types": []
-      },
-      "provenances": [
+    "uuid": "e2290d14-7e80-4db8-a715-949da4de9a07",
+    "annotations": [
         {
-          "scores": [
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM",
-              "value": 0.9
-            },
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM",
-              "value": 0.9
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "thing": {
-        "id": "http://api.ft.com/things/b43f1a91-b805-3453-8c36-1d164c047ca2",
-        "prefLabel": "",
-        "predicate": "majorMentions",
-        "types": []
-      },
-      "provenances": [
+            "id": "http://api.ft.com/things/d969d76e-f8f4-34ae-bc38-95cfd0884740",
+            "predicate": "isClassifiedBy",
+            "relevanceScore": 0.9,
+            "confidenceScore": 0.9
+        },
         {
-          "scores": [
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM",
-              "value": 0.9
-            },
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM",
-              "value": 0.9
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "thing": {
-        "id": "http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325",
-        "prefLabel": "",
-        "predicate": "isClassifiedBy",
-        "types": []
-      },
-      "provenances": [
+            "id": "http://api.ft.com/things/b43f1a91-b805-3453-8c36-1d164c047ca2",
+            "predicate": "majorMentions",
+            "relevanceScore": 0.9,
+            "confidenceScore": 0.9
+        },
         {
-          "scores": [
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-RELEVANCE-SYSTEM",
-              "value": 0.9
-            },
-            {
-              "scoringSystem": "http://api.ft.com/scoringsystem/FT-CONFIDENCE-SYSTEM",
-              "value": 0.9
-            }
-          ]
+            "id": "http://api.ft.com/things/71a5efa5-e6e0-3ce1-9190-a7eac8bef325",
+            "predicate": "isClassifiedBy",
+            "relevanceScore": 0.9,
+            "confidenceScore": 0.9
         }
-      ]
-    },
-  ]
+    ]
 }
 ```
 

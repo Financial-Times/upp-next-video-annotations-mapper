@@ -18,10 +18,13 @@ func TestAnnotationsCreation(t *testing.T) {
 				newTestTag("id1", "isClassifiedBy"),
 				newTestTag("id2", "about"),
 			},
-			newConceptAnnotation(videoUUID,
-				newTestAnnotation("id1", "isClassifiedBy"),
-				newTestAnnotation("id2", "about"),
-			),
+			ConceptAnnotation{
+				videoUUID,
+				[]annotation{
+					{"id1", "isClassifiedBy", defaultRelevanceScore, defaultConfidenceScore},
+					{"id2", "about", defaultRelevanceScore, defaultConfidenceScore},
+				},
+			},
 		},
 		{
 			[]tag{},
@@ -41,18 +44,4 @@ func newTestTag(thingID string, predicate string) tag {
 		thingID:   thingID,
 		predicate: predicate,
 	}
-}
-
-func newTestAnnotation(thingID string, predicate string) annotation {
-	t := thing{
-		ID:        thingID,
-		Predicate: predicate,
-		Types:     []string{},
-	}
-
-	return annotation{Thing: t, Provenance: provenances}
-}
-
-func newConceptAnnotation(videoUUID string, annotations ...annotation) ConceptAnnotation {
-	return ConceptAnnotation{videoUUID, annotations}
 }
