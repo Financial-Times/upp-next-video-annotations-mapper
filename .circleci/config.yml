@@ -8,20 +8,14 @@ workflows:
     jobs:
       - ft-golang-ci/build-and-test:
           name: build-and-test-project
-          context:
-            - dockerhub-shared
-            - cm-team-github
+          context: dockerhub-shared
       - ft-golang-ci/docker-build:
           name: build-docker-image
           requires:
             - build-and-test-project
-          context:
-            - dockerhub-shared
-            - cm-team-github
+          context: dockerhub-shared
   snyk-scanning:
     jobs:
       - ft-golang-ci/scan:
           name: scan-dependencies
-          context:
-            - cm-team-snyk
-            - cm-team-github
+          context: cm-team-snyk
