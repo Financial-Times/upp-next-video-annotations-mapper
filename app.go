@@ -91,7 +91,8 @@ func main() {
 		EnvVar: "KAFKA_LAG_TOLERANCE",
 	})
 
-	log := logger.NewUPPLogger(*serviceName, *logLevel)
+	logConf := logger.KeyNamesConfig{KeyTime: "event_time"}
+	log := logger.NewUPPLogger(*serviceName, *logLevel, logConf)
 
 	log.Infof("[Startup] %s is starting ", *serviceName)
 
